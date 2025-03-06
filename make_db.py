@@ -7,15 +7,15 @@ import os
 import numpy as np
 import shutil
 
-r12s = [1., 2.]  # [.5, 1.5]  # [.5, .75, 1., 1.5, 2.]
-reps = 2   #10
+r12s = [2.,]  # [.5, 1.5]  # [.5, .75, 1., 1.5, 2.]
+reps = 1   #10
 l1fs = [.1, .2, .3]  # [.2, ]  #[.2, .3, .4]
-l2s = [5e-2, 1e-1, 2e-1, 3e-1]  # [1e-3]  # [1e-4, 1e-3, 1e-2, 1e-1]
+l2s = [1e-2, 2e-2, 5e-2, 1e-1,]  # [1e-3]  # [1e-4, 1e-3, 1e-2, 1e-1]
 lfs = [.1, .2, .3]  # [.3, ]  # [.1, 0.2, 0.3, .4]
 
 srfs = [8, ]  # [8, 12, 16]
 
-cwd = "/home/jarret/PycharmProjects/decouple-composite"
+cwd = "."
 
 if __name__ == "__main__":
 
@@ -28,7 +28,7 @@ if __name__ == "__main__":
         srf_path = os.path.join(db_path, f"srf_{srf}")
         if not os.path.exists(srf_path):
             os.makedirs(srf_path)
-        shutil.copy2("/home/jarret/PycharmProjects/decouple-composite/db_config.yaml",
+        shutil.copy2(os.path.join(cwd,"db_config.yaml"),
                      os.path.join(srf_path, "db_config.yaml"))
         for r12 in r12s:
             print(f"Running pipeline with r12: {r12:.2f}")

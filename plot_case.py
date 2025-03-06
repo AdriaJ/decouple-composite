@@ -11,7 +11,7 @@ import yaml
 import numpy as np
 import matplotlib
 
-matplotlib.use('Qt5Agg')
+# matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 
 from utils import relL1Error, relL2Error
@@ -20,16 +20,21 @@ srf = 8
 r12 = 1.
 # r12 = 1.0 :927_539, 891_665
 # r12 = 2.0 : 783_710, 784_972
-seed = 927_539
+seed = 733748
 
 srf_repr = 4
-save_pdf = False
+save_plots = True
+save_ext = ".png"  # .pdf
 
-db_path = "/home/jarret/PycharmProjects/decouple-composite/database"
-figures_path = "/home/jarret/PycharmProjects/decouple-composite/figures"
+db_path = "database"
+figures_path = "figures"
 
 if __name__ == "__main__":
     case_path = os.path.join(db_path, f"srf_{srf}", f"r12_{r12:.1f}", f"{seed}")
+    if save_plots:
+        figures_path = os.path.join(figures_path, f"srf{srf}r12{r12:1f}seed{seed}")
+        if not os.path.exists(figures_path):
+            os.makedirs(figures_path)
 
     gt = np.load(os.path.join(case_path, "gt_data.npz"))
     blasso_filenames = [ n for n in os.listdir(case_path) if n.startswith("blasso") ]
@@ -78,8 +83,8 @@ if __name__ == "__main__":
     plt.stem([0, Ngrid-1], [0, 0], markerfmt='white', basefmt='C7--')
     plt.plot(np.arange(Ngrid), background, c='#1f77b4')
     plt.title("Original image (with background)")
-    if save_pdf:
-        plt.savefig(os.path.join(figures_path, "gt.pdf"))
+    if save_plots:
+        plt.savefig(os.path.join(figures_path, "gt" + save_ext))
     plt.show()
 
     # --------------------------------------------------------------
@@ -99,8 +104,8 @@ if __name__ == "__main__":
     repr_source = np.convolve(gt["img"], representation_kernel, mode="same")
     plt.plot(np.arange(repr_source.shape[0]), repr_source, c='#ff7f0e',)
     plt.suptitle(f"FSource foreground merged ($r_{12}$: {r12:.1f}, SRF: {srf:d}, SNR: 10 dB)")
-    if save_pdf:
-        plt.savefig(os.path.join(figures_path, "foreground_merged_source.png"))
+    if save_plots:
+        plt.savefig(os.path.join(figures_path, "foreground_merged_source" + save_ext))
     else:
         plt.show()
 
@@ -117,8 +122,8 @@ if __name__ == "__main__":
     # plt.scatter(np.arange(y.shape[0]), y, marker='+')
     # plt.hlines(0, 0, y.shape[0]-1, ls="--", color='#7f7f7f')
     plt.title("Noisy measurements")
-    if save_pdf:
-        plt.savefig(os.path.join(figures_path, "measurements.pdf"))
+    if save_plots:
+        plt.savefig(os.path.join(figures_path, "measurements" + save_ext))
     plt.show()
 
     # --------------------------------------------------------------
@@ -137,8 +142,8 @@ if __name__ == "__main__":
         i += 1
     fig.suptitle(f"Foreground ($r_{12}$: {r12:.1f}, SRF: {srf:d}, SNR: 10 dB)")
     axs = axs.transpose()
-    if save_pdf:
-        plt.savefig(os.path.join(figures_path, "foreground.pdf"))
+    if save_plots:
+        plt.savefig(os.path.join(figures_path, "foreground" + save_ext))
     else:
         fig.show()
 
@@ -157,8 +162,8 @@ if __name__ == "__main__":
         ax.label_outer()
         i += 1
     # fig.suptitle(f"Background (fgbgR: {fgbgR:.1f}, $r_{12}$: {r12:.1f}, SNR: {snr:.1f} dB)")
-    if save_pdf:
-        plt.savefig(os.path.join(figures_path, "backgrounds.pdf"))
+    if save_plots:
+        plt.savefig(os.path.join(figures_path, "backgrounds" + save_ext))
     fig.show()
 
     # --------------------------------------------------------------
@@ -176,8 +181,8 @@ if __name__ == "__main__":
         ax.label_outer()
         i += 1
     # fig.suptitle(f"Merged foreground (fgbgR: {fgbgR:.1f}, $r_{12}$: {r12:.1f}, SNR: {snr:.1f} dB)")
-    if save_pdf:
-        plt.savefig(os.path.join(figures_path, "foreground_merged.pdf"))
+    if save_plots:
+        plt.savefig(os.path.join(figures_path, "foreground_merged" + save_ext))
     fig.show()
 
     # --------------------------------------------------------------
@@ -193,8 +198,8 @@ if __name__ == "__main__":
         ax.set_title(rf"$\lambda = {reco['lambda_'][0]:.2e}    (f: {lfs[i]:.2f})$")
         i += 1
     fig.suptitle(f"BLASSO foreground ($r_{12}$: {r12:.1f}, SRF: {srf:d}, SNR: 10 dB)")
-    if save_pdf:
-        plt.savefig(os.path.join(figures_path, "blasso.png"))
+    if save_plots:
+        plt.savefig(os.path.join(figures_path, "blasso" + save_ext))
     else:
         fig.show()
 
@@ -212,8 +217,8 @@ if __name__ == "__main__":
         # ax.set_title(rf"$\lambda = {reco['lambda_'][0]:.2e}    (f: {lf[i]:.2f})$")
         i += 1
     # fig.suptitle(f"BLASSO convolved(fgbgR: {fgbgR:.1f}, $r_{12}$: {r12:.1f}, SNR: {snr:.1f} dB)")
-    if save_pdf:
-        plt.savefig(os.path.join(figures_path, "blasso_merged.pdf"))
+    if save_plots:
+        plt.savefig(os.path.join(figures_path, "blasso_merged" + save_ext))
     fig.show()
 
     # --------------------------------------------------------------
