@@ -23,7 +23,7 @@ from matplotlib import use
 # use("Qt5Agg")
 
 #image model
-seed = 927_539
+seed = 370
 srf = 8
 Nmeas = 100
 Ngrid = int(srf) * Nmeas
@@ -33,16 +33,16 @@ ongrid = True
 
 # measurement model
 kernel_std = 0.02
-kernel_std_bg = 3 * kernel_std
+kernel_std_bg = 4 * kernel_std
 snrdb_meas = 10
 r12 = 1.  # rate between l2 norm of fg observations and bg observations
 
 # reconstruction parameters
-lambda1_factor = 0.25
-lambda2 = 5e-2 * Nmeas  # Ngrid
+lambda1_factor = 0.2
+lambda2 = 2e-2 * Nmeas  # Ngrid
 eps = 1e-5
 
-blasso_factor = 0.3
+blasso_factor = 0.25
 
 srf_repr = 4
 
@@ -50,7 +50,7 @@ save_pdf = False
 
 # decoupled = True
 do_non_decoupled = False
-do_blasso = False
+do_blasso = True
 
 if __name__ == "__main__":
     if seed is None:
@@ -211,10 +211,15 @@ if __name__ == "__main__":
     h = np.roll(h, -regul_width//2 + 1)
     hm1 = sfft.irfft(1/sfft.rfft(h))
 
-    Mlambda = pxop.Convolve(arg_shape=Nmeas, kernel=[M_kernel,], center=[M_kernel.shape[0]//2,], mode="wrap")
-    Mlambda.lipschitz = np.abs(M_kernel).sum()
+    # print("Definition of the Stencil ops ...")
+    # Both only depend on Nmeas and lambda2
+    # start = time.perf_counter()
+    # Mlambda = pxop.Convolve(arg_shape=Nmeas, kernel=[M_kernel,], center=[M_kernel.shape[0]//2,], mode="wrap")
+    # Mlambda.lipschitz = np.abs(M_kernel).sum()
     MlambdaInv = pxop.Convolve(arg_shape=Nmeas, kernel=[hm1,], center=[0,], mode="wrap")
     MlambdaInv.lipschitz = np.abs(hm1).sum()  # MlambdaInv.estimate_lipschitz(method="svd", tol=1e-4)
+    # stencil_time = time.perf_counter() - start
+    # print(f"\tDone in : {stencil_time:.2f}s")
 
     # now define H
     # Dimension: Ngrid -> Nmeas
