@@ -4,7 +4,7 @@ Forward operator is convolution with a Gaussian kernel, sampled on a coarse grid
 Image model is sparse Dirac impulses and background made out of Gaussian kernels.
 No penalty operator, simply identity.
 
-Fixed background intensity, varying foreground with fgbgR.
+Fixed background intensity, varying foreground with r12.
 """
 
 import time
@@ -23,8 +23,8 @@ from matplotlib import use
 # use("Qt5Agg")
 
 #image model
-seed = 746
-srf = 12
+seed = 927_539
+srf = 8
 Nmeas = 100
 Ngrid = int(srf) * Nmeas
 k = 10
@@ -33,22 +33,24 @@ ongrid = True
 
 # measurement model
 kernel_std = 0.02
-kernel_std_bg = 5 * kernel_std
+kernel_std_bg = 3 * kernel_std
 snrdb_meas = 10
-r12 = 2.  # rate between l2 norm of fg observations and bg observations
+r12 = 1.  # rate between l2 norm of fg observations and bg observations
 
 # reconstruction parameters
 lambda1_factor = 0.25
-lambda2 = 1e-1 * Ngrid
+lambda2 = 5e-2 * Nmeas  # Ngrid
 eps = 1e-5
 
 blasso_factor = 0.3
 
+srf_repr = 4
+
 save_pdf = False
 
 # decoupled = True
-do_non_decoupled = True
-do_blasso = True
+do_non_decoupled = False
+do_blasso = False
 
 if __name__ == "__main__":
     if seed is None:
@@ -120,7 +122,7 @@ if __name__ == "__main__":
     noise_meas = rng.normal(0, sigma_noise, noiseless_y.shape)
     y = noiseless_y + noise_meas
 
-    # # Measurements on the background
+    # Measurements on the background
     # locs = np.arange(Ngrid) / Ngrid
     # plt.figure(figsize=(15, 4))
     # plt.subplot(141)
@@ -132,12 +134,12 @@ if __name__ == "__main__":
     # plt.plot(np.arange(kernel_width) / Ngrid, kernel_measurement)
     # plt.xlim([-.5, .5])
     # plt.subplot(144)
-    # plt.stem(np.arange(100) * ds_factor / Ngrid, meas_bg, basefmt="C7--", linefmt="C7-", markerfmt='gx')
+    # plt.stem(np.arange(Nmeas) * srf / Ngrid, meas_bg, basefmt="C7--", linefmt="C7-", markerfmt='gx')
     # plt.suptitle("Background measurements")
     # plt.show()
     #
     # # Measurements on the foreground
-    # locs = np.arange(800) / Ngrid
+    # locs = np.arange(Ngrid) / Ngrid
     # plt.figure(figsize=(15, 4))
     # plt.subplot(131)
     # plt.stem(locs[img != 0], img[img != 0])
@@ -146,7 +148,7 @@ if __name__ == "__main__":
     # plt.plot(np.arange(kernel_width) / Ngrid, kernel_measurement)
     # plt.xlim([-.5, .5])
     # plt.subplot(133)
-    # plt.stem(np.arange(100) * ds_factor / Ngrid, meas_fg, basefmt="C7--", linefmt="C7-", markerfmt='gx')
+    # plt.stem(np.arange(100) * srf / Ngrid, meas_fg, basefmt="C7--", linefmt="C7-", markerfmt='gx')
     # plt.suptitle("Foreground measurements")
     # plt.show()
     #
@@ -196,9 +198,9 @@ if __name__ == "__main__":
 
     diff_std2 = 2 * kernel_std**2
     norm_regul = np.sqrt(2 * np.pi * diff_std2)
-    diffs = np.arange(0, 4 * np.sqrt(diff_std2) * Ngrid, srf)
+    diffs = np.arange(0, 4 * np.sqrt(diff_std2) * Nmeas)
     diffs = np.hstack([-diffs[1:][::-1], diffs])
-    kernel_regul = np.exp(-0.5 * ((diffs / Ngrid) ** 2) / diff_std2)
+    kernel_regul = np.exp(-0.5 * ((diffs / Nmeas) ** 2) / diff_std2)
     kernel_regul /= norm_regul
     M_kernel = kernel_regul/lambda2
     M_kernel[M_kernel.shape[0]//2] += 1
@@ -352,8 +354,17 @@ if __name__ == "__main__":
         plt.title("Reconstruction BLASSO")
         plt.show()
 
-    repr_std = 1.5
-    representation_kernel = 1/(np.sqrt(2 * np.pi * repr_std**2)) * np.exp(-0.5 * np.arange(-3 * repr_std, 3 * repr_std + 1)**2 / repr_std**2)
+    # Representation kernel has the same finesse as the gridded image, so very fine
+    repr_std = kernel_std / srf_repr
+    repr_std_int = np.floor(repr_std * Ngrid).astype(int)
+    repr_width = 3 * 2 * repr_std_int + 1  # Length of the Gaussian kernel
+    representation_kernel = np.exp(
+        -0.5 * ((np.arange(repr_width) - (repr_width - 1) / 2) ** 2) / ((repr_std * Ngrid) ** 2))
+    norm_repr = (np.sqrt(2 * np.pi) * repr_std)
+    representation_kernel /= norm_repr
+
+    # repr_std = 1.5
+    # representation_kernel = 1/(np.sqrt(2 * np.pi * repr_std**2)) * np.exp(-0.5 * np.arange(-3 * repr_std, 3 * repr_std + 1)**2 / repr_std**2)
 
     fig = plt.figure(figsize=(16, 16))
     plt.suptitle("Foreground representation: convolution with a narrow Gaussian kernel")
@@ -391,9 +402,11 @@ if __name__ == "__main__":
     print(f"\tComposite: {np.linalg.norm(repr_recovered - repr_source)/np.linalg.norm(repr_source):.2f}")
     print(f"Relative L1 error on the foreground:")
     print(f"\tComposite: {np.linalg.norm(repr_recovered - repr_source, ord=1)/np.linalg.norm(repr_source, ord=1):.2f}")
+
     l1_value = lambda1 * np.abs(x1).sum()
     print(f"Value of the foreground regularization at convergence: {l1_value:.3e}")
-    l2_value = (np.convolve(x2, kernel_regul, mode='same')**2).sum()
+    # l2_value = (np.convolve(x2, kernel_regul, mode='same')**2).sum()
+    l2_value = np.linalg.norm(x2)**2 / Ngrid
     print(f"Approximate value of the background regularization at convergence: {lambda2 * l2_value:.3e}")
     data_fid_val = 0.5 * np.linalg.norm(y - sol_meas)**2
     print(f"Approximate value of the data fidelity at convergence: {data_fid_val:.3e}")
