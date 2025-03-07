@@ -88,7 +88,7 @@ if __name__ == "__main__":
 
         for i, lambda2 in enumerate(args.l2):
             # Scaling rule for lambda2
-            lambda2 *= Ngrid
+            lambda2 *= Nmeas
             # usage of lambda 2
             M_kernel = kernel_regul / lambda2
             M_kernel[M_kernel.shape[0] // 2] += 1
