@@ -10,16 +10,16 @@ import shutil
 from joblib import Parallel, delayed, cpu_count
 
 r12s = [1.]  # [.25, .5, .75, 1., 2., 4.]  # [.5, 1.5]  # [.5, .75, 1., 1.5, 2.]
-reps = 1  #10
+reps = int(cpu_count()/2)  #10
 l1fs = [.15, .25, .35]  # [.1, .2, .3] [.2, ]  #[.2, .3, .4]
 l2s = [1e-2, 5e-2, 1e-1, 3e-1]  #[1e-2, 2e-2, 5e-2, 1e-1,] [1e-3]  # [1e-4, 1e-3, 1e-2, 1e-1]
 lfs = [.1, .2, .3, .4]  #[.1, .2, .3]  # [.3, ]  # [.1, 0.2, 0.3, .4]
 
-srfs = [8, ]  # [8, 12, 16]
+srfs = [4, 8, 12, 16, 20]  # [8, 12, 16]
 
 cwd = "."
 
-njobs = 1  # int(cpu_count()/2)  # 1
+njobs = int(cpu_count()/2)  # 1
 
 def run_seed(seed):
     print(f"Running pipeline with seed: {seed}")
