@@ -6,7 +6,7 @@ im_model:
     max_intensity: 10
     k: 10
     ongrid: True
-    kernel_bg_factor: 5
+    kernel_bg_factor: 4
     bg_k_factor: 2
 reco_params:
     eps: 1.0e-5
