@@ -11,7 +11,7 @@ import yaml
 import numpy as np
 import matplotlib
 
-# matplotlib.use('Qt5Agg')
+matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 
 from utils import relL1Error, relL2Error
@@ -20,11 +20,11 @@ srf = 8
 r12 = 1.
 # r12 = 1.0 :927_539, 891_665
 # r12 = 2.0 : 783_710, 784_972
-seed = 733748
+seed = 117809
 
 srf_repr = 4
 save_plots = True
-save_ext = ".png"  # .pdf
+save_ext = ".pdf"  # ".png"  # .pdf
 
 db_path = "database"
 figures_path = "figures"
