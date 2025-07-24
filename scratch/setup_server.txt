@@ -1,0 +1,45 @@
+=====================
+Server setup for LCAV
+=====================
+1. select server
+2. choose a boot option: Ubuntu jammy amd64 installation via network 2204
+3. customization
+    1. password: lcav
+    2. templates: add IC-IT SSH keys to root AND LCAV customization
+4. Run setup → I confirm
+
+=================
+Connect to server
+=================
+ssh root@icclusterXXX.iccluster.epfl.ch  # replace XXX
+
+=============
+Initial setup
+=============
+# First system boot
+sudo apt update
+sudo apt upgrade
+sudo apt install net-tools htop tmux build-essential git wget -y
+
+# Conda (NOTE: use latest Anaconda version)
+# followed official instructions: https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html#installing-on-linux
+# wget https://repo.anaconda.com/archive/Anaconda3-2023.09-0-Linux-x86_64.sh
+wget https://repo.anaconda.com/archive/Anaconda3-2024.10-1-Linux-x86_64.sh
+
+chmod -v +x Anaconda*.sh
+sha256sum Anaconda*
+# get hash and change below with corresponding file name
+echo "3ba0a298155c32fbfd80cbc238298560bf69a2df511783054adfc151b76d80d8  Anaconda3-2024.10-1-Linux-x86_64.sh" | shasum --check
+# -- make sure see OK for above
+# -- run below and follow command line setup
+bash Anaconda3-2024.10-1-Linux-x86_64.sh
+
+# reboot
+sudo reboot
+
+===============
+Transfer folder
+===============
+# From server to my machine, when log into my machine
+scp -rd root@iccluster047.iccluster.epfl.ch:/root/decouple-composite/figures .
+
