@@ -17,13 +17,9 @@ import scipy.fft as sfft
 from pyxu.opt.stop import RelError, MaxIter
 from pyxu.abc import QuadraticFunc
 
-from dev.rkhs_composite import kernel_std_target
-
 cwd = "/home/jarret/PycharmProjects/decoupling/composite/continuous/l2identity"
 
 if __name__ == "__main__":
-    with open('/home/jarret/PycharmProjects/decouple-composite/db_config.yaml', 'r') as config_file:
-        config = yaml.safe_load(config_file)
     parser = argparse.ArgumentParser()
     # potentially provide a list of regularization parameters
     parser.add_argument('--srf', type=int, default=8)
@@ -34,6 +30,9 @@ if __name__ == "__main__":
     parser.add_argument('--data_path', type=str,
                         help='Location of the data and where to save the reconstructions.', default=None,)
     args = parser.parse_args()
+
+    with open(os.path.join(args.data_path, '..', '..', 'db_config.yaml'), 'r') as config_file:
+        config = yaml.safe_load(config_file)
 
     # Load the measurements
     data = np.load(os.path.join(args.data_path, "gt_data.npz"))
@@ -140,7 +139,7 @@ if __name__ == "__main__":
                 # Solve the problem
                 regul = lambda1 * pxop.PositiveL1Norm(Ngrid)
 
-                print("Solving composite minimization...")
+                print("\t\t\tSolving composite minimization...")
                 pgd = pxls.PGD(loss, g=regul, show_progress=False)
                 start = time.time()
                 pgd.fit(x0=np.zeros(img.size), stop_crit=stop_crit)
@@ -179,7 +178,7 @@ if __name__ == "__main__":
             loss = pxop.SquaredL2Norm(Nmeas).asloss(measurements) * Hop
             regul = lambda_ * pxop.PositiveL1Norm(Ngrid)
 
-            print("Solving BLASSO...")
+            print("\t\t\tSolving BLASSO...")
             pgd = pxls.PGD(loss, g=regul, show_progress=False)
             start = time.time()
             pgd.fit(x0=np.zeros(img.size), stop_crit=stop_crit)

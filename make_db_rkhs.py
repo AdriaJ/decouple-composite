@@ -13,7 +13,7 @@ r12s = [1.]  # [.25, .5, .75, 1., 2., 4.]  # [.5, 1.5]  # [.5, .75, 1., 1.5, 2.]
 reps = 1  # int(cpu_count()/2)  #10
 l1fs = [.02, .05, .1, .15]  # [.1, .2, .3] [.2, ]  #[.2, .3, .4]
 l2s = [1e-3, 5e-3, 1e-2, 5e-2]  #[1e-2, 2e-2, 5e-2, 1e-1,] [1e-3]  # [1e-4, 1e-3, 1e-2, 1e-1]
-# lfs = [.1, .2, .3, .4]  #[.1, .2, .3]  # [.3, ]  # [.1, 0.2, 0.3, .4]
+lfs = [.1, .2, .3]  # [.1, .2, .3, .4]  #[.1, .2, .3]  # [.3, ]  # [.1, 0.2, 0.3, .4]
 
 srfs = [8] # [4, 8, 12, 16, 20]  # [8, 12, 16]
 
@@ -22,21 +22,21 @@ cwd = "."
 njobs = int(cpu_count()/2)  # 1
 
 def run_seed(seed):
-    print(f"Running pipeline with seed: {seed}")
+    print(f"\t\tRunning pipeline with seed: {seed}")
     seed_path = os.path.join(r12_path, f"{seed}")
     if not os.path.exists(seed_path):
         os.makedirs(seed_path)
 
-    subprocess.run(['python', os.path.join("..", "db_simulate.py"), "--seed", f"{seed:d}",
+    subprocess.run(['python', os.path.join(cwd, "db_files", "db_simulate.py"), "--seed", f"{seed:d}",
                     "--srf", str(srf), "--save", seed_path, "--r12", str(r12)], check=True, text=True)
 
     # saves a list of npz files, some named as blasso_*.npz and some as composite_*_*.npz,
     # where * stands for the actual float value of the regularization parameters.
     # If one argument is missing the associated reconstruction is not performed.
-    subprocess.run(['python', os.path.join(cwd, "rkhs_reconstruct.py"),
-                    "--l1f", *(str(u) for u in l1fs),
-                    "--l2", *(str(u) for u in l2s),
-                    # "--lf", *(str(u) for u in lfs),
+    subprocess.run(['python', os.path.join(cwd, "db_files", "rkhs_reconstruct.py"),
+                    # "--l1f", *(str(u) for u in l1fs),
+                    # "--l2", *(str(u) for u in l2s),
+                    "--lf", *(str(u) for u in lfs),
                     "--data_path", seed_path], check=True)
 
 if __name__ == "__main__":
@@ -50,10 +50,10 @@ if __name__ == "__main__":
         srf_path = os.path.join(db_path, f"srf_{srf}")
         if not os.path.exists(srf_path):
             os.makedirs(srf_path)
-        shutil.copy2(os.path.join("..","db_config.yaml"),
+        shutil.copy2(os.path.join(cwd, "db_files", "db_config.yaml"),
                      os.path.join(srf_path, "db_config.yaml"))
         for r12 in r12s:
-            print(f"Running pipeline with r12: {r12:.2f}")
+            print(f"\tRunning pipeline with r12: {r12:.2f}")
             r12_path = os.path.join(srf_path, f"r12_{r12}")
             if not os.path.exists(r12_path):
                 os.makedirs(r12_path)

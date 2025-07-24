@@ -10,15 +10,12 @@ import numpy as np
 import scipy.signal as sig
 
 if __name__ == "__main__":
-    with open('/home/jarret/PycharmProjects/decouple-composite/db_config.yaml', 'r') as config_file:
-        config = yaml.safe_load(config_file)
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', type=int, help='Seed', default=None)
     parser.add_argument('--srf', type=int, default=8)
     parser.add_argument('--save', type=str, default=None)
     parser.add_argument('--r12', type=float, default=1.)
     args = parser.parse_args()
-
 
     if args.seed:
         seed = int(args.seed)
@@ -29,6 +26,8 @@ if __name__ == "__main__":
         save_path = os.getcwd()
     else:
         save_path = args.save
+    with open(os.path.join(save_path, '..', '..', 'db_config.yaml'), 'r') as config_file:
+        config = yaml.safe_load(config_file)
 
     Nmeas = config["meas_model"]["Nmeas"]
     kernel_std = config["meas_model"]["kernel_std"]
