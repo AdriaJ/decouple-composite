@@ -10,5 +10,6 @@ im_model:
     bg_k_factor: 2
 reco_params:
     eps: 1.0e-5
+    kernel_std_target: 0.1
 
 

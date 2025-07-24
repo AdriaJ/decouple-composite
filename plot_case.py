@@ -20,13 +20,14 @@ srf = 8
 r12 = 1.
 # r12 = 1.0 :927_539, 891_665
 # r12 = 2.0 : 783_710, 784_972
-seed = 117809
+seed = 884363  # 575355 #  117809
 
 srf_repr = 4
-save_plots = True
+save_plots = False
 save_ext = ".pdf"  # ".png"  # .pdf
 
-db_path = "database"
+# db_path = "dev/database"
+db_path = "dev/database/rkhsTk"
 figures_path = "figures"
 
 if __name__ == "__main__":
@@ -68,6 +69,7 @@ if __name__ == "__main__":
     background = gt["background"]
     y = gt["measurements"]
     Ngrid = img.shape[0]
+    locs = np.arange(Ngrid) / Ngrid
 
     plt.figure(figsize=(15, 4))
     plt.subplot(131)
@@ -133,15 +135,17 @@ if __name__ == "__main__":
                             figsize=(4 * Ncols + 2 * (Ncols - 1), 4 * Nrows + 2 * (Nrows - 1)))
     i = 0
     for reco, ax in zip(composite, axs.flat):
+        # print(reco)
         ax.stem(reco["x1"])
         # ax.set_title(rf"$\lambda_2 = {reco['lambda2'][0]:.2e}, \lambda_1 = {reco['lambda1'][0]:.2e}$")
-        ax.set(ylabel=rf"$\lambda_1$ factor: {l1fs[i % len(l1fs)]:.2f}",
+        ax.set(ylabel=rf"$\lambda_1$ factor: {l1fs[i // len(l1fs)]:.2f}",
                xlabel=rf"$\lambda_2 = {reco['lambda2'][0]:.1f}$")
+        # print(rf"$\lambda_1$ factor: {l1fs[i // len(l1fs)]:.2f}", rf"$\lambda_2 = {reco['lambda2'][0]:.1f}$")
         ax.label_outer()
         # ax.set_title(rf"$\lambda_1 = {reco['lambda1'][0]:.2e}$")
         i += 1
     fig.suptitle(f"Foreground ($r_{12}$: {r12:.1f}, SRF: {srf:d}, SNR: 10 dB)")
-    axs = axs.transpose()
+    # axs = axs.transpose()
     if save_plots:
         plt.savefig(os.path.join(figures_path, "foreground" + save_ext))
     else:
@@ -153,10 +157,10 @@ if __name__ == "__main__":
                             figsize=(3 * Ncols + 2 * (Ncols - 1), 3 * Nrows + 2 * (Nrows - 1)))
     i = 0
     for reco, ax in zip(composite, axs.flat):
-        ax.hlines(0, 0, reco["x2"].shape[0], color='black', alpha=.5)
-        ax.plot(np.arange(reco["x2"].shape[0]), reco["x2"])
+        ax.hlines(0, 0, 1, color='black', alpha=.5)
+        ax.plot(np.arange(reco["x2"].shape[0])/Ngrid, reco["x2"])
         # ax.set_title(rf"$\lambda_2 = {reco['lambda2'][0]:.2e}, \lambda_1 = {reco['lambda1'][0]:.2e}$")
-        ax.set(ylabel=rf"$\lambda_1$ factor: {l1fs[i % len(l1fs)]:.2f}",
+        ax.set(ylabel=rf"$\lambda_1$ factor: {l1fs[i // len(l1fs)]:.2f}",
                # xlabel=rf"$\lambda_1 = {reco['lambda1'][0]:.2e}  (f: {l1f[i%len(l1f)]:.2f})$",
                xlabel=rf"$\lambda_2 = {reco['lambda2'][0]:.1f}$")
         ax.label_outer()
@@ -173,9 +177,9 @@ if __name__ == "__main__":
     i = 0
     for reco, ax in zip(composite, axs.flat):
         repr_reco = np.convolve(reco["x1"], representation_kernel, mode="same")
-        ax.plot(np.arange(repr_reco.shape[0]), repr_reco, c='#ff7f0e', )  # marker='.', markersize=2)
+        ax.plot(np.arange(repr_reco.shape[0])/Ngrid, repr_reco, c='#ff7f0e', )  # marker='.', markersize=2)
         # ax.set_title(rf"$\lambda_2 = {reco['lambda2'][0]:.2e}, \lambda_1 = {reco['lambda1'][0]:.2e}$")
-        ax.set(ylabel=rf"$\lambda_1$ factor: {l1fs[i % len(l1fs)]:.2f}",
+        ax.set(ylabel=rf"$\lambda_1$ factor: {l1fs[i // len(l1fs)]:.2f}",
                # xlabel=rf"$\lambda_1 = {reco['lambda1'][0]:.2e}    (f: {l1f[i%len(l1f)]:.2f})$",
                xlabel=rf"$\lambda_2 = {reco['lambda2'][0]:.2e}$")
         ax.label_outer()
@@ -185,58 +189,87 @@ if __name__ == "__main__":
         plt.savefig(os.path.join(figures_path, "foreground_merged" + save_ext))
     fig.show()
 
-    # --------------------------------------------------------------
-    # Reconstruction with the BLASSO
-    Nrows = len(lfs)
-    fig, axs = plt.subplots(Nrows + 1, 1, sharex=True, sharey=True,
-                            figsize=(6, 4 * Nrows + 2 * (Nrows - 1)))
-    axs[0].stem(gt["img"])
-    axs[0].set_title("Source image")
-    i = 0
-    for reco, ax in zip(blasso, axs.flat[1:]):
-        ax.stem(reco["x"])
-        ax.set_title(rf"$\lambda = {reco['lambda_'][0]:.2e}    (f: {lfs[i]:.2f})$")
-        i += 1
-    fig.suptitle(f"BLASSO foreground ($r_{12}$: {r12:.1f}, SRF: {srf:d}, SNR: 10 dB)")
-    if save_plots:
-        plt.savefig(os.path.join(figures_path, "blasso" + save_ext))
-    else:
-        fig.show()
-
-    # And convolved
-    fig, axs = plt.subplots(2, 2, sharex=True, sharey=True, figsize=(12, 9))
-    repr_source = np.convolve(gt["img"], representation_kernel, mode="same")
-    axs[0, 0].plot(np.arange(repr_source.shape[0]), repr_source, c='#ff7f0e', )
-    axs[0, 0].set_title("Source image")
-    i = 0
-    for reco, ax in zip(blasso, axs.flat[1:]):
-        repr_reco = np.convolve(reco["x"], representation_kernel, mode="same")
-        ax.plot(np.arange(repr_reco.shape[0]), repr_reco, c='#ff7f0e', )
-        ax.set_title(rf"$\lambda$ factor: {lfs[i]:.2f}")
-        ax.set_ylim(top=1.05 * repr_source.max())
-        # ax.set_title(rf"$\lambda = {reco['lambda_'][0]:.2e}    (f: {lf[i]:.2f})$")
-        i += 1
-    # fig.suptitle(f"BLASSO convolved(fgbgR: {fgbgR:.1f}, $r_{12}$: {r12:.1f}, SNR: {snr:.1f} dB)")
-    if save_plots:
-        plt.savefig(os.path.join(figures_path, "blasso_merged" + save_ext))
-    fig.show()
+    # # --------------------------------------------------------------
+    # # Reconstruction with the BLASSO
+    # Nrows = len(lfs)
+    # fig, axs = plt.subplots(Nrows + 1, 1, sharex=True, sharey=True,
+    #                         figsize=(6, 4 * Nrows + 2 * (Nrows - 1)))
+    # axs[0].stem(gt["img"])
+    # axs[0].set_title("Source image")
+    # i = 0
+    # for reco, ax in zip(blasso, axs.flat[1:]):
+    #     ax.stem(reco["x"])
+    #     ax.set_title(rf"$\lambda = {reco['lambda_'][0]:.2e}    (f: {lfs[i]:.2f})$")
+    #     i += 1
+    # fig.suptitle(f"BLASSO foreground ($r_{12}$: {r12:.1f}, SRF: {srf:d}, SNR: 10 dB)")
+    # if save_plots:
+    #     plt.savefig(os.path.join(figures_path, "blasso" + save_ext))
+    # else:
+    #     fig.show()
+    #
+    # # And convolved
+    # fig, axs = plt.subplots(2, 2, sharex=True, sharey=True, figsize=(12, 9))
+    # repr_source = np.convolve(gt["img"], representation_kernel, mode="same")
+    # axs[0, 0].plot(np.arange(repr_source.shape[0])/Ngrid, repr_source, c='#ff7f0e', )
+    # axs[0, 0].set_title("Source image")
+    # i = 0
+    # for reco, ax in zip(blasso[1:], axs.flat[1:]):
+    #     repr_reco = np.convolve(reco["x"], representation_kernel, mode="same")
+    #     ax.plot(locs, repr_reco, c='#ff7f0e', )
+    #     ax.set_title(rf"$\lambda$ factor: {lfs[i+1]:.2f}")
+    #     ax.set_ylim(top=1.05 * repr_source.max())
+    #     # ax.set_title(rf"$\lambda = {reco['lambda_'][0]:.2e}    (f: {lf[i]:.2f})$")
+    #     i += 1
+    # # fig.suptitle(f"BLASSO convolved(fgbgR: {fgbgR:.1f}, $r_{12}$: {r12:.1f}, SNR: {snr:.1f} dB)")
+    # if save_plots:
+    #     plt.savefig(os.path.join(figures_path, "blasso_merged" + save_ext))
+    # fig.show()
+    #
+    # plt.figure()
+    # plt.plot(locs, np.convolve(blasso[-1]["x"], representation_kernel, mode="same"))
+    # plt.ylim(top=1.05 * repr_source.max())
+    # plt.show()
 
     # --------------------------------------------------------------
     # Metrics
     # --------------------------------------------------------------
-    blasso_conv = [ np.convolve(reco["x"], representation_kernel, mode="same") for reco in blasso ]
-    errors_blasso = np.array([relL2Error(reco, repr_source) for reco in blasso_conv])
-    errors_blasso1 = np.array([relL1Error(reco, repr_source) for reco in blasso_conv])
+    # blasso_conv = [ np.convolve(reco["x"], representation_kernel, mode="same") for reco in blasso ]
+    # errors_blasso = np.array([relL2Error(reco, repr_source) for reco in blasso_conv])
+    # errors_blasso1 = np.array([relL1Error(reco, repr_source) for reco in blasso_conv])
 
     composite_conv = [np.convolve(reco["x1"], representation_kernel, mode="same") for reco in composite]
-    errors_composite = np.array([relL2Error(reco, repr_source) for reco in composite_conv])
-    errors_composite1 = np.array([relL1Error(reco, repr_source) for reco in composite_conv])
+    errors_composite = np.array([relL2Error(reco, repr_source) for reco in composite_conv]).reshape((len(l1fs), len(l2s)))
+    errors_composite1 = np.array([relL1Error(reco, repr_source) for reco in composite_conv]).reshape((len(l1fs), len(l2s)))
+    errors_bg = np.array([relL2Error(reco["x2"], background) for reco in composite]).reshape((len(l1fs), len(l2s)))
+    errors_bg1 = np.array([relL1Error(reco["x2"], background) for reco in composite]).reshape((len(l1fs), len(l2s)))
+    times_composite = np.array([reco["t"] for reco in composite]).reshape((len(l1fs), len(l2s)))
 
-    print("BLASSO")
-    print(errors_blasso)
-    print(errors_blasso1)
+    print("Reconstruction times")
+    print(times_composite)
+
+    # print("BLASSO")
+    # print(errors_blasso)
+    # print(errors_blasso1)
 
     print("Composite")
     print(errors_composite)
     print(errors_composite1)
+    import pandas as pd
+    cols = [f"{u:.2f}" for u in l2s]
+    df_rl2 = pd.DataFrame(errors_composite, index=[f"{u:.2f}" for u in l1fs], columns=cols)
+    print(df_rl2.to_latex(index=True, float_format="{:.3f}".format,))
 
+    df_rl1 = pd.DataFrame(errors_composite1, index=[f"{u:.2f}" for u in l1fs], columns=cols)
+    print(df_rl1.to_latex(index=True, float_format="{:.3f}".format,))
+
+    dfbg_rl2 = pd.DataFrame(errors_bg, index=[f"{u:.2f}" for u in l1fs], columns=cols)
+    print(dfbg_rl2.to_latex(index=True, float_format="{:.3f}".format,))
+
+    # dfbg_rl1 = pd.DataFrame(errors_bg1, index=[f"{u:.2f}" for u in l1fs], columns=cols)
+    # print(dfbg_rl1.to_latex(index=True, float_format="{:.3f}".format,))
+
+
+    # cols = [f"{u:.2f}" for u in lfs]
+    # df_blasso = pd.DataFrame(errors_blasso.reshape((1, -1)), columns=cols, index=["L2 error"])
+    # df_blasso.loc["L1 error"] = errors_blasso1
+    # print(df_blasso.to_latex(index=True, float_format="{:.3f}".format, ))

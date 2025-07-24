@@ -10,7 +10,7 @@ import numpy as np
 import scipy.signal as sig
 
 if __name__ == "__main__":
-    with open('db_config.yaml', 'r') as config_file:
+    with open('/home/jarret/PycharmProjects/decouple-composite/db_config.yaml', 'r') as config_file:
         config = yaml.safe_load(config_file)
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', type=int, help='Seed', default=None)

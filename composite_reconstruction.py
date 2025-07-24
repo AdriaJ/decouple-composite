@@ -23,6 +23,7 @@ from matplotlib import use
 # use("Qt5Agg")
 
 #image model
+# Experiment seed: 117_809
 seed = 117_809
 srf = 8
 Nmeas = 100
@@ -46,7 +47,7 @@ blasso_factor = 0.35
 
 srf_repr = 4
 
-article_plots = False
+article_plots = True
 save_pdf = True
 
 # decoupled = True
@@ -502,7 +503,7 @@ if __name__ == "__main__":
         for ax in fig.axes:
             ax.label_outer()
         if save_pdf:
-            plt.savefig(os.path.join(figures_path, "gt.pdf"))
+            plt.savefig(os.path.join(figures_path, "measurements.pdf"))
         plt.show()
 
         # Best reconstruction

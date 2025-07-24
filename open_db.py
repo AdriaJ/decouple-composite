@@ -17,12 +17,13 @@ import pandas as pd
 from matplotlib import use
 use("Qt5Agg")
 
-db_path = "database/t_vs_r"
+db_path = "database/t_vs_r" # "database/t_vs_srf" or "database/t_vs_r"
 figures_path = "figures"
+plt.rcParams.update({'font.size': 13})
 
 srf_repr = 4
 
-save_pdf = False
+save_pdf = True
 
 def repr_kernel(kernel_std, srf_repr, Ngrid):
     repr_std = kernel_std / srf_repr
@@ -147,169 +148,86 @@ if __name__ == "__main__":
     # Plot the minimum median and interquartile minimum error
     # Also reconstruction time for best case
 
-    #select reconstructions
+    #select reconstructions for L2 error
     df_recos = df[df["type"] != "gt"]
-    idx_best = df_recos.groupby(['srf','r12', 'seed', 'type'])["RelErr_srf4"].idxmin()
+    idx_best = df_recos.groupby(['srf','r12', 'seed', 'type'])[f"RelErr_srf{srf_repr}"].idxmin()
     best_l2 = df.loc[idx_best]
-    # idx30 = df_recos.groupby(['r12', 'seed', 'type'])["RelErr_3.0"].idxmin()
-    # best_30 = df.loc[idx30]
-
-    # best_15.groupby(['fgbgR', 'type'])['RelErr_srf4'].agg(['mean', 'std', 'median', 'min', 'max'])
-    # best_15[best_15['type'] == 'blasso'].groupby(['fgbgR'])['RelErr_srf4'].agg(['median']).plot()
-    # best_15.groupby(['fgbgR', 'type'])['RelErr_srf4'].quantile([0.25, 0.75])
+    # select reconstructions for L1 error
+    df_recos = df[df["type"] != "gt"]
+    L1idx_best = df_recos.groupby(['srf','r12', 'seed', 'type'])[f"RelL1Err_srf{srf_repr}"].idxmin()
+    best_l1 = df.loc[L1idx_best]
 
     times15_comp = best_l2[best_l2['type'] == 'composite'][["r12", 'time', 'ndcp_time']].values
     times15_blasso = best_l2[best_l2['type'] == 'blasso'][["r12", 'time']].values
+
+    if db_path.endswith("vs_r"):
+        crit = 'r12'
+        xaxis_name = r"Contrast $r_{12}$"
+    elif db_path.endswith("vs_srf"):
+        crit = 'srf'
+        xaxis_name = r"Super-resolution factor $srf$"
+    else:
+        raise KeyError("Database path must end with 'vs_r' or 'vs_srf'")
+
     plt.figure()
-    # plt.scatter(times15_comp[:, 0], times15_comp[:, 1], color='red', marker='x', alpha=.5, label='Composite')
-    # plt.scatter(times15_comp[:, 0], times15_comp[:, 2], color='red', marker='+', alpha=.5, label='NDCP-Composite')
-    # plt.scatter(times15_blasso[:, 0], times15_blasso[:, 1], color='blue', marker='x', alpha=.5, label='BLASSO')
-    blasso = best_l2[best_l2['type'] == 'blasso'].groupby(['r12'])['time'].agg(['median'])
-    plt.plot(blasso.index, blasso['median'], label='BLASSO', color='blue', marker='+')
-    plt.fill_between(blasso.index, best_l2[best_l2['type'] == 'blasso'].groupby(['r12'])['time'].quantile(0.25),
-                    best_l2[best_l2['type'] == 'blasso'].groupby(['r12'])['time'].quantile(0.75), alpha=0.2,
+    blasso = best_l2[best_l2['type'] == 'blasso'].groupby([crit])['time'].agg(['median'])
+    plt.plot(blasso.index, blasso['median'], label='BLASSO', color='blue', marker='v')
+    plt.fill_between(blasso.index, best_l2[best_l2['type'] == 'blasso'].groupby([crit])['time'].quantile(0.25),
+                    best_l2[best_l2['type'] == 'blasso'].groupby([crit])['time'].quantile(0.75), alpha=0.2,
                     color='blue')
-    compo = best_l2[best_l2['type'] == 'composite'].groupby(['r12'])[['time', 'ndcp_time']].agg(['median'])
-    plt.plot(compo.index, compo['time']['median'], label='Composite', color='red', marker='x')
-    plt.plot(compo.index, compo['ndcp_time']['median'], label='NDCP-Composite', color='red', marker='+')
-    plt.fill_between(compo.index, best_l2[best_l2['type'] == 'composite'].groupby(['r12'])['time'].quantile(0.25),
-                    best_l2[best_l2['type'] == 'composite'].groupby(['r12'])['time'].quantile(0.75), alpha=0.2, color='red')
-    plt.fill_between(compo.index, best_l2[best_l2['type'] == 'composite'].groupby(['r12'])['ndcp_time'].quantile(0.25),
-                    best_l2[best_l2['type'] == 'composite'].groupby(['r12'])['ndcp_time'].quantile(0.75), alpha=0.2, color='red')
-    plt.legend()
+    compo = best_l2[best_l2['type'] == 'composite'].groupby([crit])[['time', 'ndcp_time']].agg(['median'])
+    plt.plot(compo.index, compo['time']['median'], label='Composite', color='red', marker='^')
+    plt.plot(compo.index, compo['ndcp_time']['median'], label='NDCP-Composite', color='red', marker='o')
+    plt.fill_between(compo.index, best_l2[best_l2['type'] == 'composite'].groupby([crit])['time'].quantile(0.25),
+                    best_l2[best_l2['type'] == 'composite'].groupby([crit])['time'].quantile(0.75), alpha=0.2, color='red')
+    plt.fill_between(compo.index, best_l2[best_l2['type'] == 'composite'].groupby([crit])['ndcp_time'].quantile(0.25),
+                    best_l2[best_l2['type'] == 'composite'].groupby([crit])['ndcp_time'].quantile(0.75), alpha=0.2, color='red')
+    plt.legend(loc="upper right")
+    plt.xlabel(xaxis_name)
+    plt.ylabel("Time (s)")
+    plt.yscale('log')
+    plt.tight_layout()
+    plt.subplots_adjust(left=0.140)
+    if save_pdf:
+        plt.savefig(os.path.join(figures_path, f"time_vs_{crit}.pdf"))
     plt.show()
 
-    fig = plt.figure(figsize=(12, 4))
-    axes = fig.subplots(1, 2, sharey=True)
+    fig = plt.figure(figsize=(11, 4))
+    axes = fig.subplots(1, 2, sharey=(crit=="srf"))
     ax = axes[0]
-    blasso = best_l2[best_l2['type'] == 'blasso'].groupby(['r12'])['RelErr_srf4'].agg(['median'])
+    blasso = best_l2[best_l2['type'] == 'blasso'].groupby([crit])[f'RelErr_srf{srf_repr}'].agg(['median'])
     ax.plot(blasso.index, blasso['median'], label='BLASSO', color='blue', marker='+')
-    ax.fill_between(blasso.index, best_l2[best_l2['type'] == 'blasso'].groupby(['r12'])['RelErr_srf4'].quantile(0.25),
-                    best_l2[best_l2['type'] == 'blasso'].groupby(['r12'])['RelErr_srf4'].quantile(0.75), alpha=0.2, color='blue')
-    # valb = best_15[best_15['type'] == 'blasso'][["r12", 'RelErr_srf4']].values
-    # ax.scatter(valb[:, 0], valb[:, 1], color='blue', marker='x', alpha=.5)
-    compo = best_l2[best_l2['type'] == 'composite'].groupby(['r12'])['RelErr_srf4'].agg(['median'])
+    ax.fill_between(blasso.index, best_l2[best_l2['type'] == 'blasso'].groupby([crit])[f'RelErr_srf{srf_repr}'].quantile(0.25),
+                    best_l2[best_l2['type'] == 'blasso'].groupby([crit])[f'RelErr_srf{srf_repr}'].quantile(0.75), alpha=0.2, color='blue')
+    compo = best_l2[best_l2['type'] == 'composite'].groupby([crit])[f'RelErr_srf{srf_repr}'].agg(['median'])
     ax.plot(compo.index, compo['median'], label='Composite', color='red', marker='+')
-    ax.fill_between(compo.index, best_l2[best_l2['type'] == 'composite'].groupby(['r12'])['RelErr_srf4'].quantile(0.25),
-                    best_l2[best_l2['type'] == 'composite'].groupby(['r12'])['RelErr_srf4'].quantile(0.75), alpha=0.2, color='red')
-    # valc = best_15[best_15['type'] == 'composite'][["r12", 'RelErr_srf4']].values
-    # ax.scatter(valc[:, 0], valc[:, 1], color='red', marker='x', alpha=.5)
-    ax.set_xlabel("Contrast")
-    ax.set_title(r"Relative L2 error, $\sigma=1.5$")
+    ax.fill_between(compo.index, best_l2[best_l2['type'] == 'composite'].groupby([crit])[f'RelErr_srf{srf_repr}'].quantile(0.25),
+                    best_l2[best_l2['type'] == 'composite'].groupby([crit])[f'RelErr_srf{srf_repr}'].quantile(0.75), alpha=0.2, color='red')
+    ax.set_xlabel(xaxis_name)
+    ax.set_title(r"Relative L2 error")
     ax.legend()
-    plt.show()
-
-    # ax = axes[1]
-    # blasso = best_30[best_30['type'] == 'blasso'].groupby(['r12'])['RelErr_3.0'].agg(['median'])
-    # ax.plot(blasso.index, blasso['median'], label='BLASSO', color='blue', marker='+')
-    # ax.fill_between(blasso.index, best_30[best_30['type'] == 'blasso'].groupby(['r12'])['RelErr_3.0'].quantile(0.25),
-    #                  best_30[best_30['type'] == 'blasso'].groupby(['r12'])['RelErr_3.0'].quantile(0.75), alpha=0.2, color='blue')
-    # # valb = best_30[best_30['type'] == 'blasso'][["r12", 'RelErr_3.0']].values
-    # # ax.scatter(valb[:, 0], valb[:, 1], color='blue', marker='x', alpha=.5)
-    # compo = best_30[best_30['type'] == 'composite'].groupby(['r12'])['RelErr_3.0'].agg(['median'])
-    # ax.plot(compo.index, compo['median'], label='Composite', color='red', marker='+')
-    # ax.fill_between(compo.index, best_30[best_30['type'] == 'composite'].groupby(['r12'])['RelErr_3.0'].quantile(0.25),
-    #                     best_30[best_30['type'] == 'composite'].groupby(['r12'])['RelErr_3.0'].quantile(0.75), alpha=0.2, color='red')
-    # # valc = best_30[best_30['type'] == 'composite'][["r12", 'RelErr_3.0']].values
-    # # ax.scatter(valc[:, 0], valc[:, 1], color='red', marker='x', alpha=.5)
-    # ax.set_xlabel("Contrast")
-    # ax.set_title(r"Relative L2 error, $\sigma=3.0$")
-    # ax.legend()
-    # if save_pdf:
-    #     plt.savefig(os.path.join(figures_path, "metrics_rl2.pdf"))
-    # plt.show()
-
-    # select reconstructions for L1 error
-    df_recos = df[df["type"] != "gt"]
-    L1idx_best = df_recos.groupby(['srf','r12', 'seed', 'type'])["RelL1Err_srf4"].idxmin()
-    best_l1 = df.loc[L1idx_best]
-
-    # Relative L1 error
-    fig = plt.figure(figsize=(12, 4))
-    axes = fig.subplots(1, 2, sharey=True)
-    ax = axes[0]
-    blasso = best_l1[best_l1['type'] == 'blasso'].groupby(['r12'])['RelL1Err_srf4'].agg(['median'])
+    ax = axes[1]
+    blasso = best_l1[best_l1['type'] == 'blasso'].groupby([crit])[f'RelL1Err_srf{srf_repr}'].agg(['median'])
     ax.plot(blasso.index, blasso['median'], label='BLASSO', color='blue', marker='+')
-    ax.fill_between(blasso.index, best_l1[best_l1['type'] == 'blasso'].groupby(['r12'])['RelL1Err_srf4'].quantile(0.25),
-                     best_l1[best_l1['type'] == 'blasso'].groupby(['r12'])['RelL1Err_srf4'].quantile(0.75), alpha=0.2, color='blue')
-    # valb = best_l1[best_l1['type'] == 'blasso'][["r12", 'RelL1Err_srf4']].values
-    # ax.scatter(valb[:, 0], valb[:, 1], color='blue', marker='x', alpha=.5)
-    compo = best_l1[best_l1['type'] == 'composite'].groupby(['r12'])['RelL1Err_srf4'].agg(['median'])
+    ax.fill_between(blasso.index, best_l1[best_l1['type'] == 'blasso'].groupby([crit])[f'RelL1Err_srf{srf_repr}'].quantile(0.25),
+                     best_l1[best_l1['type'] == 'blasso'].groupby([crit])[f'RelL1Err_srf{srf_repr}'].quantile(0.75), alpha=0.2, color='blue')
+    compo = best_l1[best_l1['type'] == 'composite'].groupby([crit])[f'RelL1Err_srf{srf_repr}'].agg(['median'])
     ax.plot(compo.index, compo['median'], label='Composite', color='red', marker='+')
-    ax.fill_between(compo.index, best_l1[best_l1['type'] == 'composite'].groupby(['r12'])['RelL1Err_srf4'].quantile(0.25),
-                     best_l1[best_l1['type'] == 'composite'].groupby(['r12'])['RelL1Err_srf4'].quantile(0.75), alpha=0.2, color='red')
-    # valc = best_l1[best_l1['type'] == 'composite'][["r12", 'RelL1Err_srf4']].values
-    # ax.scatter(valc[:, 0], valc[:, 1], color='red', marker='x', alpha=.5)
-    ax.set_xlabel("Contrast")
-    ax.set_title(r"Relative L1 error, $\sigma=1.5$")
+    ax.fill_between(compo.index, best_l1[best_l1['type'] == 'composite'].groupby([crit])[f'RelL1Err_srf{srf_repr}'].quantile(0.25),
+                     best_l1[best_l1['type'] == 'composite'].groupby([crit])[f'RelL1Err_srf{srf_repr}'].quantile(0.75), alpha=0.2, color='red')
+    ax.set_xlabel(xaxis_name)
+    ax.set_title(r"Relative L1 error")
     ax.legend()
+    plt.tight_layout()
+    plt.subplots_adjust(wspace=0.15)
+    if save_pdf:
+        plt.savefig(os.path.join(figures_path, f"error_vs_{crit}.pdf"))
     plt.show()
 
-    # ax = axes[1]
-    # blasso = L1best_30[L1best_30['type'] == 'blasso'].groupby(['r12'])['RelL1Err_3.0'].agg(['median'])
-    # ax.plot(blasso.index, blasso['median'], label='BLASSO', color='blue', marker='+')
-    # ax.fill_between(blasso.index, L1best_30[L1best_30['type'] == 'blasso'].groupby(['r12'])['RelL1Err_3.0'].quantile(0.25),
-    #                  L1best_30[L1best_30['type'] == 'blasso'].groupby(['r12'])['RelL1Err_3.0'].quantile(0.75), alpha=0.2, color='blue')
-    # # valb = L1best_30[L1best_30['type'] == 'blasso'][["r12", 'RelL1Err_3.0']].values
-    # # ax.scatter(valb[:, 0], valb[:, 1], color='blue', marker='x', alpha=.5)
-    # compo = L1best_30[L1best_30['type'] == 'composite'].groupby(['r12'])['RelL1Err_3.0'].agg(['median'])
-    # ax.plot(compo.index, compo['median'], label='Composite', color='red', marker='+')
-    # ax.fill_between(compo.index, L1best_30[L1best_30['type'] == 'composite'].groupby(['r12'])['RelL1Err_3.0'].quantile(0.25),
-    #                     L1best_30[L1best_30['type'] == 'composite'].groupby(['r12'])['RelL1Err_3.0'].quantile(0.75), alpha=0.2, color='red')
-    # # valc = L1best_30[L1best_30['type'] == 'composite'][["r12", 'RelL1Err_3.0']].values
-    # # ax.scatter(valc[:, 0], valc[:, 1], color='red', marker='x', alpha=.5)
-    # ax.set_xlabel("Contrast")
-    # ax.set_title(r"Relative L1 error, $\sigma=3.0$")
-    # ax.legend()
-    # if save_pdf:
-    #     plt.savefig(os.path.join(figures_path, "metrics_l1.pdf"))
-    # plt.show()
-
-
-    # Reconstruction time
-    fig = plt.figure(figsize=(15, 7))
-    axes = fig.subplots(1, 2, sharey=True)
-    ax = axes[0]
-    blasso = best_l2[best_l2['type'] == 'blasso'].groupby(['r12'])['time'].agg(['median'])
-    ax.plot(blasso.index, blasso['median'], label='BLASSO', color='blue', marker='+')
-    ax.fill_between(blasso.index, best_l2[best_l2['type'] == 'blasso'].groupby(['r12'])['time'].quantile(0.25),
-                    best_l2[best_l2['type'] == 'blasso'].groupby(['r12'])['time'].quantile(0.75), alpha=0.2, color='blue')
-    compo = best_l2[best_l2['type'] == 'composite'].groupby(['r12'])[['time', 'ndcp_time']].agg(['median'])
-    ax.plot(compo.index, compo['time']['median'], label='Composite', color='red', marker='+')
-    ax.plot(compo.index, compo['ndcp_time']['median'], label='Composite', color='red', marker='x')
-    ax.fill_between(compo.index, best_l2[best_l2['type'] == 'composite'].groupby(['r12'])['time'].quantile(0.25),
-                    best_l2[best_l2['type'] == 'composite'].groupby(['r12'])['time'].quantile(0.75), alpha=0.2, color='red')
-    ax.fill_between(compo.index, best_l2[best_l2['type'] == 'composite'].groupby(['r12'])['ndcp_time'].quantile(0.25),
-                    best_l2[best_l2['type'] == 'composite'].groupby(['r12'])['ndcp_time'].quantile(0.75), alpha=0.2,
-                    color='red')
-    ax.set_xlabel("Contrast")
-    ax.set_title(r"Reconstruction time for best case with $\sigma=1.5$")
-    ax.legend()
-    plt.show()
-
-    # ax = axes[1]
-    # blasso = best_30[best_30['type'] == 'blasso'].groupby(['r12'])['time'].agg(['median'])
-    # ax.plot(blasso.index, blasso['median'], label='BLASSO', color='blue', marker='+')
-    # ax.fill_between(blasso.index, best_30[best_30['type'] == 'blasso'].groupby(['r12'])['time'].quantile(0.25),
-    #                  best_30[best_30['type'] == 'blasso'].groupby(['r12'])['time'].quantile(0.75), alpha=0.2, color='blue')
-    # compo = best_30[best_30['type'] == 'composite'].groupby(['r12'])[['time', 'ndcp_time']].agg(['median'])
-    # ax.plot(compo.index, compo['time']['median'], label='Composite', color='red', marker='+')
-    # ax.plot(compo.index, compo['ndcp_time']['median'], label='Composite', color='red', marker='x')
-    # ax.fill_between(compo.index, best_30[best_30['type'] == 'composite'].groupby(['r12'])['time'].quantile(0.25),
-    #                     best_30[best_30['type'] == 'composite'].groupby(['r12'])['time'].quantile(0.75), alpha=0.2, color='red')
-    # ax.fill_between(compo.index, best_30[best_30['type'] == 'composite'].groupby(['r12'])['ndcp_time'].quantile(0.25),
-    #                 best_30[best_30['type'] == 'composite'].groupby(['r12'])['ndcp_time'].quantile(0.75), alpha=0.2,
-    #                 color='red')
-    # ax.set_xlabel("Contrast")
-    # ax.set_title(r"Reconstruction time for best case with $\sigma=3.0$")
-    # ax.legend()
-    # if save_pdf:
-    #     plt.savefig(os.path.join(figures_path, "time_comp.pdf"))
-    # plt.show()
-
-
-    # todo: Make the figures for time and accuracy w.r.t. contrast (r12)
-    # todo: write the code and make figure for time and accuracy vs srf
-
-
+    # Compute average gain in reconstruction time
+    comp_df = df[df['type']=='composite']
+    # rate_time_r12 = comp_df.groupby("r12")['time'].mean()/comp_df.groupby("r12")['ndcp_time'].mean()
+    # (comp_df['time']).mean()/(comp_df['ndcp_time']).mean()
+    rate_time_r12 = pd.concat([comp_df['r12'], comp_df['time']/comp_df['ndcp_time']], axis=1, keys=['r12', 'rate']).groupby("r12").mean()
+    print(f"Average rate of decoupled time: {rate_time_r12['rate'].mean():.3f}")
 
