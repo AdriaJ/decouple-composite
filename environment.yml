@@ -143,6 +143,7 @@ dependencies:
   - pcre2=10.42=hebb0a14_0
   - pexpect=4.8.0=pyhd3eb1b0_3
   - pillow=10.2.0=py310h5eee18b_0
+  - pip==24.0
   - platformdirs=3.10.0=py310h06a4308_0
   - ply=3.11=py310h06a4308_0
   - prometheus_client=0.14.1=py310h06a4308_0
@@ -238,7 +239,6 @@ dependencies:
       - pandas==2.2.1
       - papermap==0.3.0
       - partd==1.4.1
-      - pip==24.0
       - pluggy==1.4.0
       - psutil==5.9.8
       - pyproj==3.6.1
@@ -257,4 +257,3 @@ dependencies:
       - xyzservices==2023.10.1
       - zict==3.0.0
       - zipp==3.18.1
-prefix: /home/jarret/miniconda3/envs/decoupling
