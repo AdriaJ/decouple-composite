@@ -9,13 +9,13 @@ import shutil
 
 from joblib import Parallel, delayed, cpu_count
 
-r12s = [1.]  # [.25, .5, .75, 1., 2., 4.]  # [.5, 1.5]  # [.5, .75, 1., 1.5, 2.]
-reps = 1  # int(cpu_count()/2)  #10
+r12s = [.25, .5, .75, 1., 2., 4.]  # [1.]  # [.25, .5, .75, 1., 2., 4.]  # [.5, 1.5]  # [.5, .75, 1., 1.5, 2.]
+reps = int(cpu_count()/2)  #10
 l1fs = [.02, .05, .1, .15]  # [.1, .2, .3] [.2, ]  #[.2, .3, .4]
 l2s = [1e-3, 5e-3, 1e-2, 5e-2]  #[1e-2, 2e-2, 5e-2, 1e-1,] [1e-3]  # [1e-4, 1e-3, 1e-2, 1e-1]
-lfs = [.1, .2, .3]  # [.1, .2, .3, .4]  #[.1, .2, .3]  # [.3, ]  # [.1, 0.2, 0.3, .4]
+lfs = [.1, .2, .3, .4]  # [.1, .2, .3, .4]  #[.1, .2, .3]  # [.3, ]  # [.1, 0.2, 0.3, .4]
 
-srfs = [8] # [4, 8, 12, 16, 20]  # [8, 12, 16]
+srfs = [4, 8, 12, 16, 20]  # [8] # [4, 8, 12, 16, 20]  # [8, 12, 16]
 
 cwd = "."
 
@@ -34,8 +34,8 @@ def run_seed(seed):
     # where * stands for the actual float value of the regularization parameters.
     # If one argument is missing the associated reconstruction is not performed.
     subprocess.run(['python', os.path.join(cwd, "db_files", "rkhs_reconstruct.py"),
-                    # "--l1f", *(str(u) for u in l1fs),
-                    # "--l2", *(str(u) for u in l2s),
+                    "--l1f", *(str(u) for u in l1fs),
+                    "--l2", *(str(u) for u in l2s),
                     "--lf", *(str(u) for u in lfs),
                     "--data_path", seed_path], check=True)
 
