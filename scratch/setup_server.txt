@@ -37,6 +37,18 @@ bash Anaconda3-2024.10-1-Linux-x86_64.sh
 # reboot
 sudo reboot
 
+================
+Share Python env
+================
+
+conda env export --from-history > conda-env.yml
+pip freeze > pip-requirements.txt
+
+conda env create -f conda-env.yml
+conda activate decoupling
+pip install -r pip-requirements.txt
+
+
 ===============
 Transfer folder
 ===============
