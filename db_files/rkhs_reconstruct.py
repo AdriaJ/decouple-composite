@@ -140,7 +140,7 @@ if __name__ == "__main__":
                 regul = lambda1 * pxop.PositiveL1Norm(Ngrid)
 
                 print("\t\t\tSolving composite minimization...")
-                pgd = pxls.PGD(loss, g=regul, show_progress=False)
+                pgd = pxls.PGD(loss, g=regul, verbosity=10_000, show_progress=False)
                 start = time.time()
                 pgd.fit(x0=np.zeros(img.size), stop_crit=stop_crit)
                 pgd_time = time.time() - start
@@ -152,14 +152,14 @@ if __name__ == "__main__":
                 tmp[srf // 2::srf] = Mresiduals
                 x2 = np.convolve(tmp, kernel_target, mode='same') / lambda2
 
-                # # Non-decoupled solving time
-                # ndcp_loss = .5 * pxop.SquaredL2Norm(Nmeas).asloss(measurements.ravel()) * pxop.hstack([Hop, Top]) + \
-                #             lambda2 * pxop.hstack([pxop.NullFunc(Ngrid), QuadraticFunc((1, Nmeas), Q=Top)])
-                # ndcp_regul = lambda1 * pxop.hstack([pxop.PositiveL1Norm(Ngrid), pxop.NullFunc(Nmeas)])
-                # ndcp_pgd = pxls.PGD(ndcp_loss, g=ndcp_regul, show_progress=False)
-                # start = time.time()
-                # ndcp_pgd.fit(x0=np.zeros(Ngrid + Nmeas), stop_crit=ndcp_stop)
-                # ndcp_time = time.time() - start
+                # Non-decoupled solving time
+                ndcp_loss = .5 * pxop.SquaredL2Norm(Nmeas).asloss(measurements.ravel()) * pxop.hstack([Hop, Top]) + \
+                            lambda2 * pxop.hstack([pxop.NullFunc(Ngrid), QuadraticFunc((1, Nmeas), Q=Top)])
+                ndcp_regul = lambda1 * pxop.hstack([pxop.PositiveL1Norm(Ngrid), pxop.NullFunc(Nmeas)])
+                ndcp_pgd = pxls.PGD(ndcp_loss, g=ndcp_regul, verbosity=10_000, show_progress=False)
+                start = time.time()
+                ndcp_pgd.fit(x0=np.zeros(Ngrid + Nmeas), stop_crit=ndcp_stop)
+                ndcp_time = time.time() - start
 
                 # Save results
                 filename = f"composite_{l1f:f}_{lambda2:f}"
@@ -179,7 +179,7 @@ if __name__ == "__main__":
             regul = lambda_ * pxop.PositiveL1Norm(Ngrid)
 
             print("\t\t\tSolving BLASSO...")
-            pgd = pxls.PGD(loss, g=regul, show_progress=False)
+            pgd = pxls.PGD(loss, g=regul, verbosity=10_000, show_progress=False)
             start = time.time()
             pgd.fit(x0=np.zeros(img.size), stop_crit=stop_crit)
             pgd_time = time.time() - start
