@@ -24,12 +24,12 @@ sudo apt install net-tools htop tmux build-essential git wget -y
 # Conda (NOTE: use latest Anaconda version)
 # followed official instructions: https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html#installing-on-linux
 # wget https://repo.anaconda.com/archive/Anaconda3-2023.09-0-Linux-x86_64.sh
-wget https://repo.anaconda.com/archive/Anaconda3-2024.10-1-Linux-x86_64.sh
+wget https://repo.anaconda.com/archive/Anaconda3-2025.06-0-Linux-x86_64.sh
 
 chmod -v +x Anaconda*.sh
 sha256sum Anaconda*
 # get hash and change below with corresponding file name
-echo "3ba0a298155c32fbfd80cbc238298560bf69a2df511783054adfc151b76d80d8  Anaconda3-2024.10-1-Linux-x86_64.sh" | shasum --check
+echo "08db13f6db5dd4f99b3a6db96c68d064d50ea23742013b70f588e3a27a5204da  Anaconda3-2025.06-0-Linux-x86_64.sh" | shasum --check
 # -- make sure see OK for above
 # -- run below and follow command line setup
 bash Anaconda3-2024.10-1-Linux-x86_64.sh
@@ -46,7 +46,20 @@ pip freeze > pip-requirements.txt
 
 conda env create -f conda-env.yml
 conda activate decoupling
+
+OR
+
+conda env create --prefix /scratch/AdrianDB/condaEnv/decoupling2 -f conda-env.yml
+conda activate /scratch/AdrianDB/condaEnv/decoupling2
+
 pip install -r pip-requirements.txt
+
+
+=============================
+Run experiments and save logs
+=============================
+
+python3 make_db_rkhs.py 2>&1 | tee output.log
 
 
 ===============
@@ -54,4 +67,13 @@ Transfer folder
 ===============
 # From server to my machine, when log into my machine
 scp -rd root@iccluster047.iccluster.epfl.ch:/root/decouple-composite/figures .
+
+OR
+
+scp -rd root@iccluster047.iccluster.epfl.ch:/root/decouple-composite/database .
+
+OR transfer to google drive with rclone
+
+/snap/bin/rclone copy /root/decouple-composite/database/rkhsTk GDriveAJ5:ExperimentsComposite --progress --log-file=/tmp/rclone-test.log --log-level INFO
+
 

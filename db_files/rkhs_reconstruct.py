@@ -165,9 +165,9 @@ if __name__ == "__main__":
                 filename = f"composite_{l1f:f}_{lambda2:f}"
                 np.savez(os.path.join(args.data_path, filename),
                          x1=x1, x2=x2,
-                         # x1ndcp=ndcp_pgd.stats()[0]['x'][:Ngrid],
+                         x1ndcp=ndcp_pgd.stats()[0]['x'][:Ngrid],
                          t=np.r_[pgd_time], lambda1=np.r_[lambda1], lambda2=np.r_[lambda2],
-                         # ndcp_time=np.r_[ndcp_time]
+                         ndcp_time=np.r_[ndcp_time]
                          )
 
     if args.lf is not None:
