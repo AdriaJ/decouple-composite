@@ -17,13 +17,13 @@ import pandas as pd
 from matplotlib import use
 use("Qt5Agg")
 
-db_path = "database/t_vs_r" # "database/t_vs_srf" or "database/t_vs_r"
-figures_path = "figures"
+db_path = "database/rkhsTk/t_vs_srf" #"database2/rkhsTk" # "database/noOpL2/t_vs_srf" or "database/noOpL2/t_vs_r"
+figures_path = "figures/rkhs"
 plt.rcParams.update({'font.size': 13})
 
 srf_repr = 4
 
-save_pdf = True
+save_pdf = False
 
 def repr_kernel(kernel_std, srf_repr, Ngrid):
     repr_std = kernel_std / srf_repr
@@ -80,7 +80,7 @@ def path_error(kernel_std, srf_repr, ord=2):
     return path_error
 
 if __name__ == "__main__":
-    with open('db_config.yaml', 'r') as config_file:
+    with open('db_files/db_config.yaml', 'r') as config_file:
         config = yaml.safe_load(config_file)
     kernel_std = config["meas_model"]["kernel_std"]
     # repr_kernel = repr_kernel(kernel_std, srf_repr, Ngrid)
@@ -163,9 +163,11 @@ if __name__ == "__main__":
     if db_path.endswith("vs_r"):
         crit = 'r12'
         xaxis_name = r"Contrast $r_{12}$"
+        xticks = [0.5, 1., 2., 4.]
     elif db_path.endswith("vs_srf"):
         crit = 'srf'
         xaxis_name = r"Super-resolution factor $srf$"
+        xticks = df['srf'].unique()
     else:
         raise KeyError("Database path must end with 'vs_r' or 'vs_srf'")
 
@@ -184,6 +186,7 @@ if __name__ == "__main__":
                     best_l2[best_l2['type'] == 'composite'].groupby([crit])['ndcp_time'].quantile(0.75), alpha=0.2, color='red')
     plt.legend(loc="upper right")
     plt.xlabel(xaxis_name)
+    plt.xticks(xticks)
     plt.ylabel("Time (s)")
     plt.yscale('log')
     plt.tight_layout()
@@ -204,6 +207,7 @@ if __name__ == "__main__":
     ax.fill_between(compo.index, best_l2[best_l2['type'] == 'composite'].groupby([crit])[f'RelErr_srf{srf_repr}'].quantile(0.25),
                     best_l2[best_l2['type'] == 'composite'].groupby([crit])[f'RelErr_srf{srf_repr}'].quantile(0.75), alpha=0.2, color='red')
     ax.set_xlabel(xaxis_name)
+    ax.set_xticks(xticks)
     ax.set_title(r"Relative L2 error")
     ax.legend()
     ax = axes[1]
@@ -218,6 +222,7 @@ if __name__ == "__main__":
     ax.set_xlabel(xaxis_name)
     ax.set_title(r"Relative L1 error")
     ax.legend()
+    ax.set_xticks(xticks)
     plt.tight_layout()
     plt.subplots_adjust(wspace=0.15)
     if save_pdf:

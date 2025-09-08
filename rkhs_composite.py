@@ -13,7 +13,7 @@ from pyxu.opt.stop import RelError, MaxIter
 from pyxu.abc import QuadraticFunc
 
 
-seed = 117_809
+seed = 51_088
 # seed = None
 srf = 8
 Nmeas = 100
@@ -29,8 +29,8 @@ snrdb_meas = 10
 r12 = 1.  # rate between l2 norm of fg observations and bg observations
 
 # reconstruction parameters
-lambda1_factor = 0.05
-lambda2 = 5e-3 * Nmeas * srf  # Ngrid
+lambda1_factor = 0.1
+lambda2 = 1e-2 * Nmeas * srf  # Ngrid
 eps = 1e-5
 kernel_std_target = 0.1
 
@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
     if save_pdf:
         import os
-        figures_path = "figures"
+        figures_path = "figures/rkhs"
 
     # define the grid-based Gaussian kernels that I will need
     kernel_std_int = np.floor(kernel_std * Ngrid).astype(int)
@@ -309,3 +309,87 @@ if __name__ == "__main__":
         print(f"\tNon-decoupled: {ndcp_time:.2f}s")
         print(f"Relative L2 error on the foreground:")
         print(f"\tNon-decoupled: {np.linalg.norm(repr_ndcp - repr_source) / np.linalg.norm(repr_source):.2f}")
+
+
+    if article_plots:
+        # Simulated source: fg, bg, sum
+        # Measurements: fg, bg, sum
+        # Recovered: fg, bg
+        # Convolution: source, reconstruction
+
+        # Plots needed: measurements (with contribution of each comp), simple reco, fg reco (convolved)
+        locs = np.arange(Ngrid) / Ngrid
+
+        plt.figure(figsize=(15, 4))
+        plt.subplot(131)
+        plt.stem(locs[img != 0], img[img != 0], basefmt="C7--", linefmt="C1-")
+        plt.stem([0, (Ngrid - 1)/Ngrid], [0, 0], markerfmt='white', basefmt='C7--')
+        # plt.title("Original image (without background)")
+        plt.subplot(132)
+        plt.plot(locs, background, c='#1f77b4')
+        # plt.title("Original background)")
+        plt.hlines(0, 0, (Ngrid - 1)/Ngrid, ls="--", color='#7f7f7f')
+        plt.subplot(133)
+        plt.stem(locs[img != 0], img[img != 0], basefmt="C7--", linefmt="C1-")
+        plt.stem([0, (Ngrid - 1)/Ngrid], [0, 0], markerfmt='white', basefmt='C7--')
+        plt.plot(locs, background, c='#1f77b4')
+        # plt.title("Original image (with background)")
+        if save_pdf:
+            plt.savefig(os.path.join(figures_path, "gt.pdf"))
+        plt.show()
+
+        # Sum of the measurements
+        yrange = [min(3*y.min(), y.min()-0.05, -.05), 1.05*y.max()]
+        plt.figure(figsize=(15, 4))
+        plt.subplot(131)
+        plt.stem(np.arange(Nmeas)/Nmeas,meas_fg, basefmt="C7--", linefmt="C7-", markerfmt='gx')
+        # plt.title("Observations on the foreground")
+        plt.ylim(yrange)
+        plt.subplot(132)
+        plt.stem(np.arange(Nmeas)/Nmeas, meas_bg, basefmt="C7--", linefmt="C7-", markerfmt='gx')
+        # plt.title("Observations on the background")
+        plt.ylim(yrange)
+        plt.subplot(133)
+        plt.stem(np.arange(Nmeas)/Nmeas, y, basefmt="C7--", linefmt="C7-", markerfmt='gx')
+        # plt.title("Noisy measurements")
+        plt.ylim(yrange)
+        fig = plt.gcf()
+        for ax in fig.axes:
+            ax.label_outer()
+        if save_pdf:
+            plt.savefig(os.path.join(figures_path, "measurements.pdf"))
+        plt.show()
+
+        # Best reconstruction
+        plt.figure(figsize=(12, 4))
+        plt.subplot(121)
+        plt.stem(locs[x1 != 0], x1[x1 != 0], basefmt="C7--", linefmt="C1-")
+        plt.stem([0, 1], [0, 0], markerfmt='white', basefmt='C7--')
+        # plt.title("Recovered foreground (composite model)")
+        plt.subplot(122)
+        plt.plot(locs, x2, c='#1f77b4')
+        # plt.title("Recovered background (composite model)")
+        plt.hlines(0, 0, 1, ls="--", color='#7f7f7f')
+        if save_pdf:
+            plt.savefig(os.path.join(figures_path, "recos.pdf"))
+        plt.show()
+
+        # repr_best_reco = np.convolve(best_reco["x1"], representation_kernel, mode="same")
+        # repr_source = np.convolve(data["img"], representation_kernel, mode="same")
+
+        # Reconstruction after convolution
+        ymax = 1.05 * max(repr_source.max(), repr_recovered.max())
+        plt.figure(figsize=(12, 4))
+        plt.subplot(121)
+        plt.plot(locs, repr_source, c='#ff7f0e', )  # marker='.')
+        plt.ylim(top=ymax)
+        # plt.title("Source convolved")
+        plt.subplot(122)
+        plt.plot(locs, repr_recovered, c='#ff7f0e', )  # marker='.')
+        # plt.title("Foreground recovered convolved")
+        plt.ylim(top=ymax)
+        for ax in plt.gcf().axes:
+            ax.label_outer()
+        if save_pdf:
+            plt.savefig(os.path.join(figures_path, "recos_conv.pdf"))
+        plt.show()
