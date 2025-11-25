@@ -17,7 +17,7 @@ import pandas as pd
 from matplotlib import use
 use("Qt5Agg")
 
-db_path = "database/rkhsTk/t_vs_srf" #"database2/rkhsTk" # "database/noOpL2/t_vs_srf" or "database/noOpL2/t_vs_r"
+db_path = "database/rkhsTk/t_vs_r" #"database2/rkhsTk" # "database/noOpL2/t_vs_srf" or "database/noOpL2/t_vs_r"
 figures_path = "figures/rkhs"
 plt.rcParams.update({'font.size': 13})
 

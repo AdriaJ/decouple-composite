@@ -210,15 +210,18 @@ if __name__ == "__main__":
 
     # And convolved
     fig, axs = plt.subplots(2, 2, sharex=True, sharey=True, figsize=(12, 9))
+    repr_recos = [np.convolve(reco["x"], representation_kernel, mode="same") for reco in blasso[1:]]
+    ymax = max([r.max() for r in repr_recos])
     repr_source = np.convolve(gt["img"], representation_kernel, mode="same")
     axs[0, 0].plot(np.arange(repr_source.shape[0])/Ngrid, repr_source, c='#ff7f0e', )
     axs[0, 0].set_title("Source image")
     i = 0
-    for reco, ax in zip(blasso[1:], axs.flat[1:]):
-        repr_reco = np.convolve(reco["x"], representation_kernel, mode="same")
+    # for reco, ax in zip(blasso[1:], axs.flat[1:]):
+        # repr_reco = np.convolve(reco["x"], representation_kernel, mode="same")
+    for repr_reco, ax in zip(repr_recos, axs.flat[1:]):
         ax.plot(locs, repr_reco, c='#ff7f0e', )
         ax.set_title(rf"$\lambda$ factor: {lfs[i+1]:.2f}")
-        ax.set_ylim(top=1.05 * repr_source.max())
+        ax.set_ylim(top=1.05 * ymax)
         # ax.set_title(rf"$\lambda = {reco['lambda_'][0]:.2e}    (f: {lf[i]:.2f})$")
         i += 1
     # fig.suptitle(f"BLASSO convolved(fgbgR: {fgbgR:.1f}, $r_{12}$: {r12:.1f}, SNR: {snr:.1f} dB)")
@@ -245,7 +248,9 @@ if __name__ == "__main__":
 
     print("BLASSO")
     print(errors_blasso)
+    print(" & ".join([f"{r:.3f}" for r in errors_blasso]))
     print(errors_blasso1)
+    print(" & ".join([f"{r:.3f}" for r in errors_blasso1]))
 
     print("Composite")
     print(errors_composite)
