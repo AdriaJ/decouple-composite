@@ -1,4 +1,4 @@
-name: decoupling2
+name: decoupling
 channels:
   - conda-forge
   - defaults
