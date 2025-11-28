@@ -6,7 +6,7 @@ This repo contains the code related to the article [Decoupled Solution for Compo
 It performs simple composite reconstruction in the setup detailed in the article.
 It also contains the code to perform a batch of experiments and synthesize the dataset analyzed for comparing the performance of decoupled reconstruction in different setups.
 
-The dataset produced while writing the article is saved on [Zenodo]() [TODO: upload the dataset and link it here !].
+The dataset produced while writing the article is saved on [Zenodo](https://doi.org/10.5281/zenodo.17722179).
 
 File description
 ----------------
