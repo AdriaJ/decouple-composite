@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 save_pdf = True
-figures_path = "/home/jarret/PycharmProjects/decouple-composite/figures"
+figures_path = "/home/adrian/PycharmProjects/decouple-composite/figures"
 
 kernel_std = 0.02  # Gaussian kernel std
 Nmeas = 100
@@ -31,7 +31,6 @@ if __name__=="__main__":
                           kernel_measurement, mode='valid')
     meas_fg = conv_fg[2::srf]
 
-    #todo : add noise
     supp_size = (meas_fg != 0).sum()
     sigma_noise = np.linalg.norm(meas_fg)/supp_size * 10**(-snrdb_meas / 20)
     noise_meas = np.random.normal(0, sigma_noise, meas_fg.shape)
@@ -42,7 +41,7 @@ if __name__=="__main__":
     # plt.stem(np.arange(100)/99, img, label="Dirac impulse")
     plt.scatter(np.arange(Ngrid)[2::srf]/(Ngrid-1), np.zeros(100), marker='|', color='k', alpha=.7)
     plt.hlines(0, 0, 1, linestyles='-', color='k', alpha=.7)
-    plt.arrow(pos, 0, 0, 10, color='r', width=0.0005,
+    plt.arrow(pos, 0, 0, 1, color='r', width=0.0005,
               head_width=0.006, head_length=1., label="Dirac impulse (height = 1)")
     plt.plot(X, continuous_conv, color='orange', label="Continuous convolution")
     plt.scatter(np.arange(Ngrid)[2::8]/(Ngrid-1), meas_fg, label="Measurements", marker='+', s=70, zorder=10)
@@ -50,6 +49,6 @@ if __name__=="__main__":
     plt.legend()
     plt.xlim([0.53, 0.78])
     if save_pdf:
-        plt.savefig(f"{figures_path}/measurement_figure.pdf")
+        plt.savefig(f"figures/measurement_figure.pdf")
     plt.show()
 

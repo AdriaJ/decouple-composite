@@ -38,7 +38,7 @@ blasso_factor = 0.35
 
 srf_repr = 4
 
-article_plots = False
+article_plots = True
 save_pdf = False
 
 # decoupled = True

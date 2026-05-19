@@ -4,10 +4,10 @@ meas_model:
     snrdb: 10
 im_model:
     max_intensity: 10
-    k: 10
+    k: 2
     ongrid: True
     kernel_bg_factor: 4
-    bg_k_factor: 2
+    bg_k_factor: 10
 reco_params:
     eps: 1.0e-5
     kernel_std_target: 0.1
