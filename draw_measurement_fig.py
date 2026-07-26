@@ -1,6 +1,24 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+import matplotlib as mpl
+
+mpl.rcParams.update({
+    "text.usetex": False,
+    "font.family": "sans-serif",
+    "font.size": 10,  # match \documentclass[12pt]
+    "axes.labelsize": 10,
+    "axes.titlesize": 10,
+    "legend.fontsize": 9,
+    "xtick.labelsize": 8,  # typical hierarchy (slightly smaller)
+    "ytick.labelsize": 8,
+})
+
+def set_figsize(fraction=1.0, aspect=0.6):
+    width_pt = 489.10307
+    w = width_pt / 72.27 * fraction
+    return (w, w * aspect)
+
 save_pdf = True
 figures_path = "/home/adrian/PycharmProjects/decouple-composite/figures"
 
@@ -37,7 +55,7 @@ if __name__=="__main__":
     limited_noise = np.zeros(Nmeas)
     limited_noise[meas_fg != 0] = noise_meas[meas_fg != 0]
 
-    plt.figure(figsize=(8, 4))
+    plt.figure(figsize=set_figsize(fraction=.8, aspect=.5))
     # plt.stem(np.arange(100)/99, img, label="Dirac impulse")
     plt.scatter(np.arange(Ngrid)[2::srf]/(Ngrid-1), np.zeros(100), marker='|', color='k', alpha=.7)
     plt.hlines(0, 0, 1, linestyles='-', color='k', alpha=.7)
@@ -49,6 +67,6 @@ if __name__=="__main__":
     plt.legend()
     plt.xlim([0.53, 0.78])
     if save_pdf:
-        plt.savefig(f"figures/measurement_figure.pdf")
+        plt.savefig(f"figures/measurement_figure.pdf", bbox_inches='tight')
     plt.show()
 
