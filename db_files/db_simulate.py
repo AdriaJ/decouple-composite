@@ -32,17 +32,19 @@ if __name__ == "__main__":
     Nmeas = config["meas_model"]["Nmeas"]
     kernel_std = config["meas_model"]["kernel_std"]
     snrdb_meas = config["meas_model"]["snrdb"]
+    rep_sigma = config["meas_model"]["rep_sigma"]
     max_intensity = config["im_model"]["max_intensity"]
     k = config["im_model"]["k"]
     ongrid = config["im_model"]["ongrid"]
     kernel_bg_factor = config["im_model"]["kernel_bg_factor"]
+    presence_rate = config["im_model"]["presence_rate"]
     srf = args.srf
     Ngrid = srf * Nmeas
     kernel_std_bg = kernel_bg_factor * kernel_std
 
     # define the grid-based Gaussian kernels needed
     kernel_std_int = np.floor(kernel_std * Ngrid).astype(int)
-    kernel_width = 3 * 2 * kernel_std_int + 1  # Length of the Gaussian kernel
+    kernel_width = rep_sigma * 2 * kernel_std_int + 1  # Length of the Gaussian kernel
     kernel_measurement = np.exp(
         -0.5 * ((np.arange(kernel_width) - (kernel_width - 1) / 2) ** 2) / ((kernel_std * Ngrid) ** 2))
     norm_meas = (np.sqrt(2 * np.pi) * kernel_std)
@@ -50,14 +52,14 @@ if __name__ == "__main__":
 
 
     kernel_std_bg_int = np.floor(kernel_std_bg * Ngrid).astype(int)
-    kernel_width_bg = 3 * 2 * kernel_std_bg_int + 1
+    kernel_width_bg = rep_sigma * 2 * kernel_std_bg_int + 1
     kernel_bg_1d = np.exp(-0.5 * ((np.arange(kernel_width_bg) - (kernel_width_bg - 1) / 2) ** 2) / ((kernel_std_bg*Ngrid) ** 2))
     norm_bg1d = (np.sqrt(2 * np.pi) * kernel_std_bg)
     kernel_bg_1d /= norm_bg1d
 
     std_meas_bg2 = kernel_std**2 + kernel_std_bg**2
     std_meas_bg2_int = np.floor(np.sqrt(std_meas_bg2) * Ngrid).astype(int)
-    width_meas_bg = 3 * 2 * std_meas_bg2_int + 1
+    width_meas_bg = rep_sigma * 2 * std_meas_bg2_int + 1
     kernel_meas_bg = (kernel_std * kernel_std_bg * np.sqrt(2 * np.pi / std_meas_bg2) *
                       np.exp(-0.5 * ((np.arange(width_meas_bg) - (width_meas_bg - 1) / 2) ** 2) / (std_meas_bg2 * (Ngrid ** 2))))
     kernel_meas_bg /= (norm_meas * norm_bg1d)
@@ -66,14 +68,14 @@ if __name__ == "__main__":
 
     if ongrid:
         img = np.zeros((Ngrid,))
-        Neff = int(.5 * Ngrid)
+        Neff = int(presence_rate * Ngrid)
         idx = rng.choice(Neff, k, replace=False)
-        indices = idx + int(.25 * Ngrid)
+        indices = idx + int((1-presence_rate) * .5 * Ngrid)
         img[indices] = rng.uniform(1, max_intensity, k)
         bg_impulses = np.zeros((Ngrid,))
         kk = config["im_model"]["bg_k_factor"] * k
         idx = rng.choice(Neff, kk, replace=False)
-        indices = idx + int(.25 * Ngrid)
+        indices = idx + int((1-presence_rate) * .5 * Ngrid)
         bg_impulses[indices] = 1 + rng.uniform(-.5, .5, kk)
         background = sig.fftconvolve(bg_impulses, kernel_bg_1d, mode='same')
 

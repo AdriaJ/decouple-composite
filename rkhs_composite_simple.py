@@ -50,15 +50,15 @@ presence_rate = .5  # .5  # Change percentage of presence
 # measurement model
 kernel_std = 0.02
 kernel_std_bg = 4 * kernel_std #4 * kernel_std
-snrdb_meas = 10
+snrdb_meas = 20 # 10
 r12 = 1.  # rate between l2 norm of fg observations and bg observations
 rep_sigma = 4
 
 # reconstruction parameters
-lambda1_factor = 0.1
-lambda2 = 1e-2 * Nmeas * 4  # srf  # Ngrid
-eps = 1e-9
-kernel_std_target = 0.1
+lambda1_factor = 0.05
+lambda2 = 1e-2 * Nmeas * 2  # 4
+eps = 1e-5
+kernel_std_target = 0.08  # 0.1
 
 blasso_factor = 0.35
 

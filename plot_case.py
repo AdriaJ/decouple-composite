@@ -46,7 +46,7 @@ save_plots = True # True
 save_ext = ".pdf"  # ".png"  # .pdf
 
 # db_path = "dev/database"
-db_path = "database/rkhsTk" # "database/rkhsTk/t_vs_r"
+db_path = "database/rkhsTk10db"  # "database/rkhsTk10db/t_vs_r"
 # figures_path = "figures/rkhs"
 figures_path = "figures/review2"
 

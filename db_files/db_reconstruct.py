@@ -45,8 +45,9 @@ if __name__ == "__main__":
 
     # Common operators
     kernel_std = config["meas_model"]["kernel_std"]
+    rep_sigma = config["meas_model"]["rep_sigma"]
     kernel_std_int = np.floor(kernel_std * Ngrid).astype(int)
-    kernel_width = 3 * 2 * kernel_std_int + 1  # Length of the Gaussian kernel
+    kernel_width = rep_sigma * 2 * kernel_std_int + 1  # Length of the Gaussian kernel
     kernel_measurement = np.exp(
         -0.5 * ((np.arange(kernel_width) - (kernel_width - 1) / 2) ** 2) / ((kernel_std * Ngrid) ** 2))
     norm_meas = (np.sqrt(2 * np.pi) * kernel_std)
