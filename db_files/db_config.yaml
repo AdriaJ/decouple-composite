@@ -5,7 +5,7 @@ meas_model:
     rep_sigma: 4
 im_model:
     max_intensity: 10
-    k: 2
+    k: 8
     ongrid: True
     kernel_bg_factor: 4
     bg_k_factor: 10

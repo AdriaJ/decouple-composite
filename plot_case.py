@@ -39,14 +39,14 @@ srf = 8
 r12 = 1.
 # r12 = 1.0 :927_539, 891_665
 # r12 = 2.0 : 783_710, 784_972
-seed = 476613 # 156086 #476613 #51088  # 575355 #  117809
+seed = 476613  # 351930  # 476613
 
 srf_repr = 4
-save_plots = True # True
+save_plots = False # True
 save_ext = ".pdf"  # ".png"  # .pdf
 
 # db_path = "dev/database"
-db_path = "database/rkhsTk10db"  # "database/rkhsTk10db/t_vs_r"
+db_path = "database/rkhsTk20db"  # "database/rkhsTk10db/t_vs_r"
 # figures_path = "figures/rkhs"
 figures_path = "figures/review2"
 
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     blasso_filenames = [ n for n in os.listdir(case_path) if n.startswith("blasso") ]
     blasso_filenames.sort()
     composite_filenames = [ n for n in os.listdir(case_path) if n.startswith("composite") ]
-    composite_filenames = [n for n in composite_filenames if not n.endswith("0.800000.npz")]
+    # composite_filenames = [n for n in composite_filenames if not n.endswith("0.800000.npz")]
     blasso = [ np.load(os.path.join(case_path, n)) for n in blasso_filenames ]
     composite = [ np.load(os.path.join(case_path, n)) for n in composite_filenames ]
 

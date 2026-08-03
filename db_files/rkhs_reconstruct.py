@@ -9,10 +9,11 @@ import argparse
 import yaml
 
 import numpy as np
+import pyxu.abc as pxa
 import pyxu.operator as pxop
 import pyxu.opt.solver as pxls
 
-import scipy.fft as sfft
+from scipy.sparse import diags
 
 from pyxu.opt.stop import RelError, MaxIter
 from pyxu.abc import QuadraticFunc
@@ -88,7 +89,7 @@ if __name__ == "__main__":
         # Regul operator
         diff_std2 = kernel_std ** 2 + kernel_std_target ** 2
         norm_regul = np.sqrt(2 * np.pi * diff_std2)
-        diffs = np.arange(0, 4 * np.sqrt(diff_std2) * Ngrid, srf)
+        diffs = np.arange(0, 5 * np.sqrt(diff_std2) * Ngrid, srf)
         diffs = np.hstack([-diffs[1:][::-1], diffs])
         kernel_regul = np.exp(-0.5 * ((diffs / Ngrid) ** 2) / diff_std2)
         kernel_regul /= norm_regul
@@ -115,20 +116,12 @@ if __name__ == "__main__":
             # usage of lambda 2
             M_kernel = kernel_regul / lambda2
             M_kernel[M_kernel.shape[0] // 2] += 1
-
-            regul_width = kernel_regul.shape[0]
-            h = np.zeros(Nmeas)
-            h[:regul_width] = M_kernel
-            h = np.roll(h, -regul_width // 2 + 1)
-            hm1 = sfft.irfft(1 / sfft.rfft(h))
-
-            MlambdaInv = pxop.Convolve(
-                arg_shape=Nmeas,
-                kernel=[hm1, ],
-                center=[0, ],
-                mode="wrap",  # constant
-                enable_warnings=True,)
-            MlambdaInv.lipschitz = np.abs(hm1).sum()
+            K = len(M_kernel)
+            offsets = np.arange(-(K // 2), K - K // 2)
+            Mlambda_mat = diags(M_kernel, offsets, shape=(Nmeas, Nmeas)).toarray()
+            Mlambdam1_mat = np.linalg.inv(Mlambda_mat)
+            MlambdaInv = pxa.LinOp.from_array(Mlambdam1_mat)
+            MlambdaInv.lipschitz = MlambdaInv.estimate_lipschitz()
 
             lambda1max = np.abs(Hop.adjoint(MlambdaInv(measurements).ravel())).max()
             for j, l1f in enumerate(args.l1f):

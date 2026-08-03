@@ -9,15 +9,17 @@ import shutil
 
 from joblib import Parallel, delayed, cpu_count
 
-exp_name = "rkhsTk20db"
+exp_name = "rkhsTk20dbK8"
 
 r12s = [1.]  # [.25, .5, .75, 1., 2., 4.]  # [.5, 1.5]  # [.5, .75, 1., 1.5, 2.]
 reps = 1 # int(cpu_count()/2)  #10
 l1fs = [.01, .02, .05, .1, ] # [.02, .05, .1, .15]  # [.1, .2, .3] [.2, ]  #[.2, .3, .4]
-l2s = [1e-3, 2.5e-3, 5e-3, 1e-2, ] # [1e-3, 5e-3, 1e-2, 5e-2]  #[1e-2, 2e-2, 5e-2, 1e-1,] [1e-3]  # [1e-4, 1e-3, 1e-2, 1e-1]
-lfs = [.1, .2, .3, .4,]  #[.1, .2, .3, .4]  # [.1, .2, .3, .4]  #[.1, .2, .3]  # [.3, ]  # [.1, 0.2, 0.3, .4]
+l2s = [5e-4, 1e-3, 5e-3, 1e-2, ] # [1e-3, 5e-3, 1e-2, 5e-2]  #[1e-2, 2e-2, 5e-2, 1e-1,] [1e-3]  # [1e-4, 1e-3, 1e-2, 1e-1]
+lfs = [.05, .1, .2, .3,]  #[.1, .2, .3, .4]  # [.1, .2, .3, .4]  #[.1, .2, .3]  # [.3, ]  # [.1, 0.2, 0.3, .4]
 
 srfs = [8, ]  # [4, 8, 12, 16, 20]  # [8] # [4, 8, 12, 16, 20]  # [8, 12, 16]
+
+seeds = [476_613, ]
 
 cwd = "."
 
@@ -60,6 +62,7 @@ if __name__ == "__main__":
             if not os.path.exists(r12_path):
                 os.makedirs(r12_path)
 
-            seeds = np.random.choice(1_000_000, reps, replace=False)
+            if seeds is None:
+                seeds = np.random.choice(1_000_000, reps, replace=False)
             Parallel(n_jobs=njobs)(delayed(run_seed)(seed) for seed in seeds)
 

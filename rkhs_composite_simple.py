@@ -37,7 +37,7 @@ def set_figsize(fraction=1.0, aspect=0.6):
 
 from mpl_toolkits.axes_grid1.inset_locator import mark_inset, inset_axes
 
-seed = 476_613
+seed = 476_613  # 351_930  # 476_613
 # seed = None
 srf = 8  # 8  # 16
 Nmeas = 100
@@ -55,8 +55,8 @@ r12 = 1.  # rate between l2 norm of fg observations and bg observations
 rep_sigma = 4
 
 # reconstruction parameters
-lambda1_factor = 0.05
-lambda2 = 1e-2 * Nmeas * 2  # 4
+lambda1_factor = 0.02
+lambda2 = Nmeas * srf * 1e-3 # 4
 eps = 1e-5
 kernel_std_target = 0.08  # 0.1
 
@@ -121,11 +121,11 @@ if __name__ == "__main__":
         background = sig.fftconvolve(bg_impulses, kernel_bg_1d, mode='same')
 
     # Continuous-time convolution and evaluate on the coarse grid
-    conv_fg = np.convolve(np.pad(img, (kernel_width//2, kernel_width//2), mode='wrap'), # constant
+    conv_fg = np.convolve(np.pad(img, (kernel_width//2, kernel_width//2), mode='constant'), # constant
                           kernel_measurement, mode='valid')
     meas_fg = conv_fg[srf // 2::srf]
 
-    conv_bg = np.convolve(np.pad(bg_impulses, (width_meas_bg//2, width_meas_bg//2), mode='wrap'), # constant
+    conv_bg = np.convolve(np.pad(bg_impulses, (width_meas_bg//2, width_meas_bg//2), mode='constant'), # constant
                           kernel_meas_bg, mode='valid')
     meas_bg = conv_bg[srf // 2::srf]
 
@@ -141,6 +141,7 @@ if __name__ == "__main__":
     sigma_noise = np.linalg.norm(noiseless_y)/Nmeas * 10**(-snrdb_meas / 20)
     noise_meas = rng.normal(0, sigma_noise, noiseless_y.shape)
     y = noiseless_y + noise_meas
+    y = np.clip(y, a_min=0, a_max=None)
 
 
 # -------------------------
@@ -159,24 +160,38 @@ if __name__ == "__main__":
 
     diff_std2 = kernel_std**2 + kernel_std_target**2
     norm_regul = np.sqrt(2 * np.pi * diff_std2)
-    diffs = np.arange(0, 4 * np.sqrt(diff_std2) * Nmeas)
+    diffs = np.arange(0, 5 * np.sqrt(diff_std2) * Nmeas)  # 4 *
     diffs = np.hstack([-diffs[1:][::-1], diffs])
     kernel_regul = np.exp(-0.5 * ((diffs / Nmeas) ** 2) / diff_std2)
     kernel_regul /= norm_regul
     M_kernel = kernel_regul/lambda2
     M_kernel[M_kernel.shape[0]//2] += 1
 
-    regul_width = kernel_regul.shape[0]
-    h = np.zeros(Nmeas)
-    h[:regul_width] = M_kernel
-    h = np.roll(h, -regul_width//2 + 1)
-    hm1 = sfft.irfft(1/sfft.rfft(h))
+    # Mlambda_mat = np.zeros((Nmeas, Nmeas + M_kernel.shape[0]))
+    # for i in range(Nmeas):
+    #     Mlambda_mat[i, i:M_kernel.shape[0]+i] = M_kernel
+    # Mlambda_mat = Mlambda_mat[:, M_kernel.shape[0]//2:-M_kernel.shape[0]//2]
+    from scipy.sparse import diags
+    K = len(M_kernel)
+    offsets = np.arange(-(K // 2), K - K // 2)
+    Mlambda_mat = diags(M_kernel, offsets, shape=(Nmeas, Nmeas)).toarray()
+    Mlambdam1_mat = np.linalg.inv(Mlambda_mat)
+    import pyxu.abc as pxa
+    MlambdaInv = pxa.LinOp.from_array(Mlambdam1_mat)
+    MlambdaInv.lipschitz = MlambdaInv.estimate_lipschitz()
 
+    plt.figure()
+    plt.imshow(Mlambda_mat)
+    plt.show()
+    # regul_width = kernel_regul.shape[0]
+    # h = np.zeros(Nmeas)
+    # h[:regul_width] = M_kernel
+    # h = np.roll(h, -regul_width//2 + 1)
+    # hm1 = sfft.irfft(1/sfft.rfft(h))
     # MlambdaInv = pxop.Convolve(arg_shape=Nmeas, kernel=[hm1,], center=[0,], mode="wrap")
-    MlambdaInv = pxop.Convolve(arg_shape=Nmeas, kernel=[np.roll(hm1, hm1.shape[0]//2-1), ], center=[hm1.shape[0]//2-1, ], mode="wrap")
-    MlambdaInv.lipschitz = np.abs(hm1).sum()
+    # MlambdaInv.lipschitz = np.abs(hm1).sum()
 
-    # # test the correct computaiton of Mlambda Inv:
+    # # test the correct computation of Mlambda Inv:
     # Mlambda = pxop.Convolve(arg_shape=Nmeas, kernel=[M_kernel,], center=[M_kernel.shape[0]//2,], mode="wrap")
     # for _ in range(10):
     #     tmp = np.random.normal(loc=0, scale=1, size=Nmeas)
@@ -200,7 +215,7 @@ if __name__ == "__main__":
     #     print(np.allclose(MlambdaInv(test_vect), matInv@test_vect))
     #     print(np.linalg.norm(MlambdaInv(test_vect) - matInv@test_vect))
 
-    fOp = pxop.Convolve(arg_shape=img.shape, kernel=[kernel_measurement,], center=[kernel_width // 2,], mode="wrap")
+    fOp = pxop.Convolve(arg_shape=img.shape, kernel=[kernel_measurement,], center=[kernel_width // 2,], mode="constant")
     fOp.lipschitz = fOp.estimate_lipschitz(method='svd', tol=1e-3)
     ss = pxop.SubSample(Ngrid, slice(srf // 2, Ngrid, srf))
     Hop = ss * fOp
@@ -224,10 +239,22 @@ if __name__ == "__main__":
     _, hist = pgd.stats()
     x1 = pgd.solution()
 
-    Mresiduals = MlambdaInv(y - Hop(x1))
+    resid = y - Hop(x1)
+    # Mresiduals = MlambdaInv(resid)
+    Mresiduals = MlambdaInv(resid)
+
+    # plt.figure()
+    # plt.subplot(121)
+    # plt.stem(resid)
+    # plt.subplot(122)
+    # plt.stem(Mresiduals)
+    # plt.show()
+
     tmp = np.zeros(Ngrid)
     tmp[srf // 2::srf] = Mresiduals
     x2 = np.convolve(tmp, kernel_target, mode='same') / lambda2
+
+
 
     if do_non_decoupled:
         print("Non-decoupled composite reconstruction...")
@@ -251,7 +278,7 @@ if __name__ == "__main__":
         x2_innovations_ndcp = ndcp_sol['x'][Ngrid:]
         x2_ndcp = np.zeros(Ngrid)
         x2_ndcp[srf // 2::srf] = x2_innovations_ndcp
-        # x2_ndcp = np.convolve(np.pad(x2_ndcp, (kernel_width_target//2, kernel_width_target//2), mode='wrap'),
+        # x2_ndcp = np.convolve(np.pad(x2_ndcp, (kernel_width_target//2, kernel_width_target//2), mode='constant'),
         #                       kernel_target, mode='valid')
         x2_ndcp = np.convolve(x2_ndcp, kernel_target, mode='same')
         # print(np.allclose(x1_ndcp, 0))  # make sure the solution is non null
@@ -622,7 +649,7 @@ if __name__ == "__main__":
 
         Ncontinuous = srf * Ngrid
         ckernel_std_int = np.floor(kernel_std * Ncontinuous).astype(int)
-        ckernel_width = 3 * 2 * ckernel_std_int + 1  # Length of the Gaussian kernel
+        ckernel_width = 4 * 2 * ckernel_std_int + 1  # Length of the Gaussian kernel
         continuous_kernel = np.exp(
             -0.5 * ((np.arange(ckernel_width) - (ckernel_width - 1) / 2) ** 2) / ((kernel_std * Ncontinuous) ** 2))
         norm_meas = (np.sqrt(2 * np.pi) * kernel_std)
@@ -635,10 +662,14 @@ if __name__ == "__main__":
         # plt.scatter(np.arange(ckernel_width)/ckernel_width, continuous_kernel)
         # plt.show()
 
-        measx1 = np.convolve(np.pad(x1, (kernel_width//2, kernel_width//2), mode='wrap'), kernel_measurement, mode='valid')
-        measx2 = np.convolve(np.pad(x2, (kernel_width//2, kernel_width//2), mode='wrap'), kernel_measurement, mode='valid')/Ngrid
+        measx1 = np.convolve(np.pad(x1, (kernel_width//2, kernel_width//2), mode='constant'), kernel_measurement, mode='valid')
+        measx2 = np.convolve(np.pad(x2, (kernel_width//2, kernel_width//2), mode='constant'), kernel_measurement, mode='valid')/Ngrid
         sol_meas = (measx1 + measx2)[srf // 2::srf]
         residuals = y - sol_meas
+
+        # plt.figure()
+        # plt.stem(sol_meas)
+        # plt.show()
 
         cresiduals = np.zeros(srf * Ngrid)
         cresiduals[srf*srf // 2::srf*srf] = residuals
@@ -674,12 +705,12 @@ if __name__ == "__main__":
         plt.hlines(0, 0, 1, ls='--', lw=.5, color='gray')
         plt.show()
 
-        plt.figure()
-        plt.scatter(np.arange(Nmeas)/Nmeas, sol_meas - MlambdaInv(Hop(x1)))
-        plt.show()
-        tmp_res = sol_meas - MlambdaInv(Hop(x1))
-        padded_res = np.pad(tmp_res, kernel_regul.shape[0]//2, mode='constant')
-        norm_residuals = np.dot(tmp_res, np.convolve(kernel_regul, padded_res, mode='valid'))
+        # plt.figure()
+        # plt.scatter(np.arange(Nmeas)/Nmeas, sol_meas - MlambdaInv(Hop(x1)))
+        # plt.show()
+        # tmp_res = sol_meas - MlambdaInv(Hop(x1))
+        # padded_res = np.pad(tmp_res, kernel_regul.shape[0]//2, mode='constant')
+        # norm_residuals = np.dot(tmp_res, np.convolve(kernel_regul, padded_res, mode='valid'))
 
         # ckernel_std_target_int = np.floor(kernel_std_target * Ncontinuous).astype(int)
         # ckernel_width_target = 3 * 2 * ckernel_std_target_int + 1

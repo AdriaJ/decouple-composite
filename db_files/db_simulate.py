@@ -79,11 +79,11 @@ if __name__ == "__main__":
         bg_impulses[indices] = 1 + rng.uniform(-.5, .5, kk)
         background = sig.fftconvolve(bg_impulses, kernel_bg_1d, mode='same')
 
-    conv_fg = np.convolve(np.pad(img, (kernel_width//2, kernel_width//2), mode='wrap'), # constant
+    conv_fg = np.convolve(np.pad(img, (kernel_width//2, kernel_width//2), mode='constant'), # constant
                           kernel_measurement, mode='valid')
     meas_fg = conv_fg[srf // 2::srf]
 
-    conv_bg = np.convolve(np.pad(bg_impulses, (width_meas_bg//2, width_meas_bg//2), mode='wrap'), # constant
+    conv_bg = np.convolve(np.pad(bg_impulses, (width_meas_bg//2, width_meas_bg//2), mode='constant'), # constant
                           kernel_meas_bg, mode='valid')
     meas_bg = conv_bg[srf // 2::srf]
 
