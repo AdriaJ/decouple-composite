@@ -42,13 +42,13 @@ r12 = 1.
 seed = 476613  # 351930  # 476613
 
 srf_repr = 4
-save_plots = False # True
+save_plots = True # True
 save_ext = ".pdf"  # ".png"  # .pdf
 
 # db_path = "dev/database"
 db_path = "database/rkhsTk20db"  # "database/rkhsTk10db/t_vs_r"
 # figures_path = "figures/rkhs"
-figures_path = "figures/review2"
+figures_path = "figures/review3"
 
 if __name__ == "__main__":
     case_path = os.path.join(db_path, f"srf_{srf}", f"r12_{r12:.1f}", f"{seed}")
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     blasso_filenames = [ n for n in os.listdir(case_path) if n.startswith("blasso") ]
     blasso_filenames.sort()
     composite_filenames = [ n for n in os.listdir(case_path) if n.startswith("composite") ]
-    # composite_filenames = [n for n in composite_filenames if not n.endswith("0.800000.npz")]
+    composite_filenames = [n for n in composite_filenames if not n.endswith("8.000000.npz")]
     blasso = [ np.load(os.path.join(case_path, n)) for n in blasso_filenames ]
     composite = [ np.load(os.path.join(case_path, n)) for n in composite_filenames ]
 
@@ -206,7 +206,7 @@ if __name__ == "__main__":
         ax.plot(locs, reco["x2"], c='#1f77b4', ls=(0, (5, 1)), label="Reconstruction")
         ax.set(xlabel=rf"$\alpha_1$ = {l1fs[i // len(l2s)]:.2f}",
                ylabel=rf"$\lambda_2 = {reco['lambda2'][0]:.1f}$")
-        ax.set_ylim(top=1.05 * max(background))
+        ax.set_ylim(top=1.155 * max(background))
         ax.label_outer()
         i += 1
     plt.subplots_adjust(top=0.975, bottom=0.095, left=0.097, right=0.975, hspace=0.167, wspace=0.117)
@@ -303,10 +303,10 @@ if __name__ == "__main__":
     repr_recos = [np.convolve(reco["x"], representation_kernel, mode="same") for reco in blasso[offset_index:]]
     ymax = max(max([r.max() for r in repr_recos]), repr_source.max())
     repr_source = np.convolve(gt["img"], representation_kernel, mode="same")
-    axs[0, 0].plot(np.arange(repr_source.shape[0])/Ngrid, repr_source, c='#ff7f0e', )
-    axs[0, 0].set_title("Source signal")
+    # axs[0, 0].plot(np.arange(repr_source.shape[0])/Ngrid, repr_source, c='#ff7f0e', )
+    # axs[0, 0].set_title("Source signal")
     i = 0
-    for repr_reco, ax in zip(repr_recos, axs.flat[1:]):
+    for repr_reco, ax in zip(repr_recos, axs.flat[:]):
         ax.plot(locs, repr_source, c='#ff7f0e', label="Ground truth", alpha=.6)
         ax.plot(locs, repr_reco, c='#663000', ls=(0, (5, 1)), zorder=2, label="Reconstruction")
         ax.set_title(rf"$\alpha$ = {lfs[i+offset_index]:.2f}")
@@ -354,12 +354,15 @@ if __name__ == "__main__":
     import pandas as pd
     cols = [f"{u:.2f}" for u in l2s]
     df_rl2 = pd.DataFrame(errors_composite, index=[f"{u:.2f}" for u in l1fs], columns=cols)
+    df_rl2 = df_rl2.T
     print(df_rl2.to_latex(index=True, float_format="{:.3f}".format,))
 
     df_rl1 = pd.DataFrame(errors_composite1, index=[f"{u:.2f}" for u in l1fs], columns=cols)
+    df_rl1 = df_rl1.T
     print(df_rl1.to_latex(index=True, float_format="{:.3f}".format,))
 
     dfbg_rl2 = pd.DataFrame(errors_bg, index=[f"{u:.2f}" for u in l1fs], columns=cols)
+    dfbg_rl2 = dfbg_rl2.T
     print(dfbg_rl2.to_latex(index=True, float_format="{:.3f}".format,))
 
     # dfbg_rl1 = pd.DataFrame(errors_bg1, index=[f"{u:.2f}" for u in l1fs], columns=cols)

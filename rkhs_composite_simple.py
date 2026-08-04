@@ -56,8 +56,8 @@ rep_sigma = 4
 
 # reconstruction parameters
 lambda1_factor = 0.02
-lambda2 = Nmeas * srf * 1e-3 # 4
-eps = 1e-5
+lambda2 = Nmeas * srf * 5e-4 # 4
+eps = 1e-6
 kernel_std_target = 0.08  # 0.1
 
 blasso_factor = 0.35
@@ -79,7 +79,7 @@ if __name__ == "__main__":
     if save_pdf:
         import os
         # figures_path = "figures/rkhs"
-        figures_path = "figures/review2"
+        figures_path = "figures/review3"
 
     # define the grid-based Gaussian kernels that I will need
     kernel_std_int = np.floor(kernel_std * Ngrid).astype(int)
@@ -141,7 +141,7 @@ if __name__ == "__main__":
     sigma_noise = np.linalg.norm(noiseless_y)/Nmeas * 10**(-snrdb_meas / 20)
     noise_meas = rng.normal(0, sigma_noise, noiseless_y.shape)
     y = noiseless_y + noise_meas
-    y = np.clip(y, a_min=0, a_max=None)
+    # y = np.clip(y, a_min=0, a_max=None)
 
 
 # -------------------------
@@ -180,9 +180,9 @@ if __name__ == "__main__":
     MlambdaInv = pxa.LinOp.from_array(Mlambdam1_mat)
     MlambdaInv.lipschitz = MlambdaInv.estimate_lipschitz()
 
-    plt.figure()
-    plt.imshow(Mlambda_mat)
-    plt.show()
+    # plt.figure()
+    # plt.imshow(Mlambda_mat)
+    # plt.show()
     # regul_width = kernel_regul.shape[0]
     # h = np.zeros(Nmeas)
     # h[:regul_width] = M_kernel
@@ -572,8 +572,8 @@ if __name__ == "__main__":
         plt.ylim(top=ymax)
         # Zoom right
         xinf, xsup = 0.56, 0.59
-        yinf, ysup = 70, 220
-        axins = inset_axes(ax, width="20%", height="40%", bbox_to_anchor=(0.7, 0.2, 1, 1), bbox_transform=ax.transAxes, loc='lower left')
+        yinf, ysup = 130, 230
+        axins = inset_axes(ax, width="20%", height="40%", bbox_to_anchor=(0.7, 0.15, 1, 1), bbox_transform=ax.transAxes, loc='lower left')
         axins.set_xlim(xinf, xsup)
         axins.set_ylim(yinf, ysup)
         axins.plot(locs, repr_source, c='#ff7f0e', label="Ground truth")
@@ -581,10 +581,10 @@ if __name__ == "__main__":
         axins.set_xticks([0.57, 0.59])
         # axins.set_yticks([])
         axins.yaxis.set_ticks_position('right')
-        mark_inset(ax, axins, loc1=2, loc2=4, fc="none", ec="0.5")
+        mark_inset(ax, axins, loc1=2, loc2=3, fc="none", ec="0.5")
         # Zoom left
         xinf, xsup = 0.325, 0.355
-        yinf, ysup = 360, 510
+        yinf, ysup = 420, 520
         axins2 = inset_axes(ax, width="20%", height="40%", bbox_to_anchor=(0.08, 0.4, 1, 1), bbox_transform=ax.transAxes, loc='lower left')
         axins2.set_xlim(xinf, xsup)
         axins2.set_ylim(yinf, ysup)
